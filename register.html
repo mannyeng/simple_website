@@ -256,21 +256,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
   </div>
 </div>
 
-<button class="admin-toggle" id="adminToggle">&#9881; View Members DB</button>
-
-<div class="admin-overlay" id="adminOverlay">
-  <div class="admin-inner">
-    <div class="admin-header">
-      <h2>Members Database</h2>
-      <div class="admin-btns">
-        <button class="btn-clear" id="btnClearDB">Clear All</button>
-        <button class="btn-close-admin" id="btnCloseAdmin">&#x2715; Close</button>
-      </div>
-    </div>
-    <div class="stat-grid" id="statGrid"></div>
-    <div id="tableWrap"></div>
-  </div>
-</div>
+ 
 
 <script>
 /* ── DB ── */
@@ -372,51 +358,6 @@ function showSuccess(m){
     '</div>';
 }
 
-/* ── ADMIN ── */
-document.getElementById('adminToggle').addEventListener('click',function(){renderAdmin();document.getElementById('adminOverlay').classList.add('open')});
-document.getElementById('btnCloseAdmin').addEventListener('click',function(){document.getElementById('adminOverlay').classList.remove('open')});
-document.getElementById('btnClearDB').addEventListener('click',function(){
-  if(!confirm('Delete ALL members? This cannot be undone.'))return;
-  localStorage.removeItem('grace_members');renderAdmin();
-});
-
-function deleteMember(id){
-  if(!confirm('Remove this member?'))return;
-  saveMembers(getMembers().filter(function(m){return m.id!==id}));renderAdmin();
-}
-
-function renderAdmin(){
-  var members=getMembers();
-  var ml={youth:'Youth Ministry',worship:'Worship Team',outreach:'Outreach & Service',study:'Bible Study',general:'General Member'};
-  var today=new Date().toDateString(),todayN=0,newsN=0,mCount={};
-  members.forEach(function(m){
-    if(new Date(m.joinedAt).toDateString()===today)todayN++;
-    if(m.newsletter)newsN++;
-    mCount[m.ministry]=(mCount[m.ministry]||0)+1;
-  });
-  var topM='&mdash;',topC=0;
-  for(var k in mCount){if(mCount[k]>topC){topC=mCount[k];topM=ml[k]||k;}}
-  document.getElementById('statGrid').innerHTML=
-    '<div class="stat-card"><span class="s-num">'+members.length+'</span><span class="s-lbl">Total Members</span></div>'+
-    '<div class="stat-card"><span class="s-num">'+todayN+'</span><span class="s-lbl">Joined Today</span></div>'+
-    '<div class="stat-card"><span class="s-num">'+newsN+'</span><span class="s-lbl">Newsletter Subscribers</span></div>'+
-    '<div class="stat-card"><span class="s-num">'+topM+'</span><span class="s-lbl">Top Ministry Interest</span></div>';
-  if(!members.length){document.getElementById('tableWrap').innerHTML='<div class="empty-state"><p>No members registered yet.</p></div>';return;}
-  var rows=members.map(function(m){
-    var d=new Date(m.joinedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    return '<tr>'+
-      '<td style="color:var(--gold);font-size:.75rem">'+m.id+'</td>'+
-      '<td style="color:var(--cream)">'+m.firstName+' '+m.lastName+'</td>'+
-      '<td>'+m.email+'</td>'+
-      '<td>'+(m.phone||'&mdash;')+'</td>'+
-      '<td><span class="badge">'+(ml[m.ministry]||'General')+'</span></td>'+
-      '<td>'+(m.newsletter?'<span style="color:#6b9e75">&#10003; Yes</span>':'<span style="color:var(--stone)">No</span>')+'</td>'+
-      '<td>'+d+'</td>'+
-      '<td><button class="btn-del" onclick="deleteMember(\''+m.id+'\')">&#x2715; Remove</button></td>'+
-    '</tr>';
-  }).join('');
-  document.getElementById('tableWrap').innerHTML='<div style="overflow-x:auto"><table class="members-table"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Ministry</th><th>Newsletter</th><th>Joined</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-}
 </script>
 </body>
 </html>
