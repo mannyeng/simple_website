@@ -1112,7 +1112,7 @@
             <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             <div>
               <span class="detail-label">Email</span>
-              hello@gracecommunity.org
+              <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="046c6168686b446376656761676b6969716a6d707d2a6b7663">[email&#160;protected]</a>
             </div>
           </li>
           <li>
@@ -1262,12 +1262,12 @@
     </div>
     <button class="btn-primary" style="width:100%; padding:16px; margin-top:8px; font-size:0.75rem; letter-spacing:0.15em; border:none; cursor:none;">Sign In</button>
     <div class="modal-footer" style="margin-top:20px">
-      <a href="#">Forgot password?</a> &nbsp;·&nbsp; Don't have an account? <a href="#">Register</a>
+      <a href="#">Forgot password?</a> &nbsp;·&nbsp; Don't have an account? <a href="register.html">Register</a>
     </div>
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   // Custom cursor
   const cursor = document.getElementById('cursor');
   const ring = document.getElementById('cursorRing');
@@ -1323,11 +1323,4 @@
 
   // Smooth scroll for nav
   document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const target = document.querySelector(a.getAttribute('href'));
-      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
-    });
-  });
-</script>
-</body>
-</html>
+  
