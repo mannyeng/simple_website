@@ -1268,9 +1268,10 @@
 </div>
 
 <script>
+(function() {
   // Custom cursor
-  const cursor = document.getElementById('cursor');
-  const ring = document.getElementById('cursorRing');
+  var cursor = document.getElementById('cursor');
+  var ring = document.getElementById('cursorRing');
   document.addEventListener('mousemove', function(e) {
     cursor.style.left = e.clientX + 'px';
     cursor.style.top = e.clientY + 'px';
@@ -1302,18 +1303,18 @@
   reveals.forEach(function(r) { observer.observe(r); });
 
   // Modal
-  function openModal(e) { e.preventDefault(); document.getElementById('loginModal').classList.add('open'); }
-  function closeModal() { document.getElementById('loginModal').classList.remove('open'); }
-  function closeModalOnOverlay(e) { if (e.target === e.currentTarget) { closeModal(); } }
+  window.openModal = function(e) { e.preventDefault(); document.getElementById('loginModal').classList.add('open'); }
+  window.closeModal = function() { document.getElementById('loginModal').classList.remove('open'); }
+  window.closeModalOnOverlay = function(e) { if (e.target === e.currentTarget) { window.closeModal(); } }
 
   // Donate amounts
-  function setAmount(btn) {
+  window.setAmount = function(btn) {
     document.querySelectorAll('.amount-btn').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
   }
 
   // Form submit
-  function handleFormSubmit(e) {
+  window.handleFormSubmit = function(e) {
     e.preventDefault();
     var btn = e.target;
     btn.textContent = 'Message Sent!';
@@ -1329,6 +1330,7 @@
       if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
     });
   });
+})();
 </script>
 </body>
 </html>

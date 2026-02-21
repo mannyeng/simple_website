@@ -314,7 +314,6 @@
   }
   .form-group select {
     -webkit-appearance: none;
-    appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8963e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 4px center;
@@ -862,275 +861,254 @@
 </div>
 
 <script>
-  // ─── CURSOR ───────────────────────────────────────────────
-  const cursor = document.getElementById('cursor');
-  const ring = document.getElementById('cursorRing');
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-    setTimeout(() => {
-      ring.style.left = e.clientX + 'px';
-      ring.style.top = e.clientY + 'px';
-    }, 60);
-  });
-  document.querySelectorAll('a, button, input, select').forEach(el => {
-    el.addEventListener('mouseenter', () => ring.style.transform = 'translate(-50%,-50%) scale(1.8)');
-    el.addEventListener('mouseleave', () => ring.style.transform = 'translate(-50%,-50%) scale(1)');
-  });
-
-  // ─── DATABASE (localStorage) ──────────────────────────────
+(function() {
+  // ─── DATABASE ─────────────────────────────────────────────
   function getMembers() {
     try { return JSON.parse(localStorage.getItem('grace_members') || '[]'); }
-    catch { return []; }
+    catch(err) { return []; }
   }
   function saveMembers(members) {
     localStorage.setItem('grace_members', JSON.stringify(members));
   }
   function addMember(member) {
-    const members = getMembers();
-    // Check for duplicate email
-    if (members.find(m => m.email.toLowerCase() === member.email.toLowerCase())) {
-      return { success: false, message: 'An account with this email already exists.' };
+    var members = getMembers();
+    for (var i = 0; i < members.length; i++) {
+      if (members[i].email.toLowerCase() === member.email.toLowerCase()) {
+        return { success: false, message: 'An account with this email already exists.' };
+      }
     }
     member.id = 'GC-' + Date.now();
     member.joinedAt = new Date().toISOString();
     members.push(member);
     saveMembers(members);
-    return { success: true, member };
+    return { success: true, member: member };
   }
 
   // ─── PASSWORD STRENGTH ────────────────────────────────────
   document.getElementById('password').addEventListener('input', function() {
-    const val = this.value;
-    let score = 0;
+    var val = this.value;
+    var score = 0;
     if (val.length >= 8) score++;
     if (/[A-Z]/.test(val)) score++;
     if (/[0-9]/.test(val)) score++;
     if (/[^A-Za-z0-9]/.test(val)) score++;
-    const colors = ['', '#c47070', '#d4a04a', '#6b9e75', '#3d6b4f'];
-    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-    for (let i = 1; i <= 4; i++) {
+    var colors = ['', '#c47070', '#d4a04a', '#6b9e75', '#3d6b4f'];
+    var labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    for (var i = 1; i <= 4; i++) {
       document.getElementById('sb' + i).style.background = i <= score ? colors[score] : 'rgba(61,46,30,0.12)';
     }
     document.getElementById('strengthLabel').textContent = val.length ? labels[score] : '';
     document.getElementById('strengthLabel').style.color = colors[score];
   });
 
-  // ─── FORM VALIDATION & SUBMIT ─────────────────────────────
-  document.getElementById('registerForm').addEventListener('submit', async function(e) {
+  // ─── FORM SUBMIT ──────────────────────────────────────────
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    const btn = document.getElementById('submitBtn');
+    var btn = document.getElementById('submitBtn');
     hideGlobalError();
-
-    // Collect values
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName  = document.getElementById('lastName').value.trim();
-    const email     = document.getElementById('email').value.trim();
-    const password  = document.getElementById('password').value;
-    const confirm   = document.getElementById('confirmPassword').value;
-    const terms     = document.getElementById('terms').checked;
-    const dob       = document.getElementById('dob').value;
-    const phone     = document.getElementById('phone').value.trim();
-    const source    = document.getElementById('source').value;
-    const ministry  = document.getElementById('ministry').value;
-    const newsletter = document.getElementById('newsletter').checked;
-
-    // Validate
-    let valid = true;
     clearErrors();
 
+    // Collect values
+    var firstName  = document.getElementById('firstName').value.trim();
+    var lastName   = document.getElementById('lastName').value.trim();
+    var email      = document.getElementById('email').value.trim();
+    var password   = document.getElementById('password').value;
+    var confirm    = document.getElementById('confirmPassword').value;
+    var terms      = document.getElementById('terms').checked;
+    var dob        = document.getElementById('dob').value;
+    var phone      = document.getElementById('phone').value.trim();
+    var source     = document.getElementById('source').value;
+    var ministry   = document.getElementById('ministry').value;
+    var newsletter = document.getElementById('newsletter').checked;
+
+    // Validate
+    var valid = true;
     if (!firstName) { setError('firstName', true); valid = false; }
     if (!lastName)  { setError('lastName', true); valid = false; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('email', true); valid = false; }
     if (!password || password.length < 8) { setError('password', true); valid = false; }
     if (password !== confirm) { setError('confirmPassword', true); valid = false; }
     if (!terms) { showGlobalError('You must agree to the Terms of Service to continue.'); valid = false; }
-
     if (!valid) return;
 
-    // Simulate loading
-    btn.classList.add('loading');
+    // Show loading state
     btn.disabled = true;
-    await delay(1200);
+    btn.querySelector('.btn-text').textContent = 'Creating Account...';
 
-    // Save to DB
-    const result = addMember({
-      firstName, lastName, email,
-      password: hashSimple(password), // never store plaintext
-      dob, phone, source, ministry, newsletter
-    });
+    // Use setTimeout to allow UI to update before processing
+    setTimeout(function() {
+      var result = addMember({
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: hashSimple(password),
+        dob: dob,
+        phone: phone,
+        source: source,
+        ministry: ministry,
+        newsletter: newsletter
+      });
 
-    btn.classList.remove('loading');
-    btn.disabled = false;
+      btn.disabled = false;
+      btn.querySelector('.btn-text').textContent = 'Create My Account';
 
-    if (!result.success) {
-      showGlobalError(result.message);
-      return;
-    }
+      if (!result.success) {
+        showGlobalError(result.message);
+        return;
+      }
 
-    // Show success
-    showSuccess(result.member);
+      showSuccess(result.member);
+    }, 800);
   });
 
   function setError(id, show) {
-    const input = document.getElementById(id);
+    var input = document.getElementById(id);
     if (!input) return;
-    input.classList.toggle('error', show);
-    const err = input.nextElementSibling;
-    if (err && err.classList.contains('error-msg')) err.style.display = show ? 'block' : 'none';
+    if (show) { input.classList.add('error'); }
+    else { input.classList.remove('error'); }
+    var err = input.nextElementSibling;
+    if (err && err.classList.contains('error-msg')) {
+      err.style.display = show ? 'block' : 'none';
+    }
   }
   function clearErrors() {
-    document.querySelectorAll('input.error').forEach(i => i.classList.remove('error'));
-    document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+    document.querySelectorAll('input.error').forEach(function(i) { i.classList.remove('error'); });
+    document.querySelectorAll('.error-msg').forEach(function(e) { e.style.display = 'none'; });
   }
   function showGlobalError(msg) {
-    const el = document.getElementById('globalError');
+    var el = document.getElementById('globalError');
     el.textContent = msg;
     el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   function hideGlobalError() {
     document.getElementById('globalError').style.display = 'none';
   }
-
-  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
   function hashSimple(str) {
-    // Simple hash for demo (use bcrypt server-side in production)
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash = hash & hash;
+    }
     return 'hashed_' + Math.abs(hash).toString(16);
   }
 
   function showSuccess(member) {
     document.getElementById('formState').style.display = 'none';
-    const s = document.getElementById('successState');
+    var s = document.getElementById('successState');
     s.classList.add('show');
-
-    const ministryLabels = {
-      youth:'Youth Ministry', worship:'Worship Team',
-      outreach:'Outreach & Service', study:'Bible Study', general:'General Member', '': 'General Member'
+    var ministryLabels = {
+      youth: 'Youth Ministry', worship: 'Worship Team',
+      outreach: 'Outreach & Service', study: 'Bible Study',
+      general: 'General Member', '': 'General Member'
     };
-
-    document.getElementById('memberCard').innerHTML = `
-      <span class="mc-label">Member ID</span>
-      <span class="mc-value">${member.id}</span>
-      <div class="mc-row">
-        <div>
-          <span class="mc-label" style="margin-top:10px;display:block;">Full Name</span>
-          <span class="mc-value">${member.firstName} ${member.lastName}</span>
-        </div>
-        <div>
-          <span class="mc-label" style="margin-top:10px;display:block;">Email</span>
-          <span class="mc-value" style="font-size:0.9rem;">${member.email}</span>
-        </div>
-        <div>
-          <span class="mc-label" style="margin-top:10px;display:block;">Ministry</span>
-          <span class="mc-value">${ministryLabels[member.ministry] || 'General Member'}</span>
-        </div>
-        <div>
-          <span class="mc-label" style="margin-top:10px;display:block;">Joined</span>
-          <span class="mc-value">${new Date(member.joinedAt).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}</span>
-        </div>
-      </div>
-    `;
+    var joinDate = new Date(member.joinedAt).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric'
+    });
+    document.getElementById('memberCard').innerHTML =
+      '<span class="mc-label">Member ID</span>' +
+      '<span class="mc-value">' + member.id + '</span>' +
+      '<div class="mc-row">' +
+        '<div><span class="mc-label" style="margin-top:10px;display:block;">Full Name</span>' +
+        '<span class="mc-value">' + member.firstName + ' ' + member.lastName + '</span></div>' +
+        '<div><span class="mc-label" style="margin-top:10px;display:block;">Email</span>' +
+        '<span class="mc-value" style="font-size:0.9rem;">' + member.email + '</span></div>' +
+        '<div><span class="mc-label" style="margin-top:10px;display:block;">Ministry</span>' +
+        '<span class="mc-value">' + (ministryLabels[member.ministry] || 'General Member') + '</span></div>' +
+        '<div><span class="mc-label" style="margin-top:10px;display:block;">Joined</span>' +
+        '<span class="mc-value">' + joinDate + '</span></div>' +
+      '</div>';
   }
 
   // ─── ADMIN PANEL ──────────────────────────────────────────
-  function openAdmin() {
+  window.openAdmin = function() {
     renderAdmin();
     document.getElementById('adminPanel').classList.add('open');
   }
-  function closeAdmin() {
+  window.closeAdmin = function() {
     document.getElementById('adminPanel').classList.remove('open');
   }
-
-  function renderAdmin() {
-    const members = getMembers();
-    const ministryLabels = {
-      youth:'Youth Ministry', worship:'Worship Team',
-      outreach:'Outreach & Service', study:'Bible Study', general:'General Member'
-    };
-
-    const today = new Date().toDateString();
-    const todayCount = members.filter(m => new Date(m.joinedAt).toDateString() === today).length;
-    const newsletterCount = members.filter(m => m.newsletter).length;
-    const ministryCounts = {};
-    members.forEach(m => { ministryCounts[m.ministry] = (ministryCounts[m.ministry] || 0) + 1; });
-    const topMinistry = Object.entries(ministryCounts).sort((a,b) => b[1]-a[1])[0];
-
-    document.getElementById('adminStats').innerHTML = `
-      <div class="stat-card"><span class="s-num">${members.length}</span><span class="s-label">Total Members</span></div>
-      <div class="stat-card"><span class="s-num">${todayCount}</span><span class="s-label">Joined Today</span></div>
-      <div class="stat-card"><span class="s-num">${newsletterCount}</span><span class="s-label">Newsletter Subscribers</span></div>
-      <div class="stat-card"><span class="s-num">${topMinistry ? ministryLabels[topMinistry[0]] || '—' : '—'}</span><span class="s-label">Top Ministry Interest</span></div>
-    `;
-
-    if (!members.length) {
-      document.getElementById('membersTableWrap').innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <p style="font-size:0.9rem;">No members registered yet. Be the first!</p>
-        </div>
-      `;
-      return;
-    }
-
-    const rows = members.map(m => `
-      <tr>
-        <td><span style="color:var(--gold);font-size:0.75rem;">${m.id}</span></td>
-        <td style="color:var(--cream);">${m.firstName} ${m.lastName}</td>
-        <td>${m.email}</td>
-        <td>${m.phone || '—'}</td>
-        <td><span class="badge">${ministryLabels[m.ministry] || 'General'}</span></td>
-        <td>${m.newsletter ? '<span style="color:#6b9e75;">✓ Yes</span>' : '<span style="color:var(--stone);">No</span>'}</td>
-        <td>${new Date(m.joinedAt).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}</td>
-        <td>
-          <button onclick="deleteMember('${m.id}')" style="background:none;border:none;color:var(--stone);cursor:none;font-size:0.8rem;transition:color 0.2s;" onmouseover="this.style.color='#c47070'" onmouseout="this.style.color='var(--stone)'">✕ Remove</button>
-        </td>
-      </tr>
-    `).join('');
-
-    document.getElementById('membersTableWrap').innerHTML = `
-      <div style="overflow-x:auto;">
-        <table class="members-table">
-          <thead>
-            <tr>
-              <th>Member ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Ministry</th>
-              <th>Newsletter</th>
-              <th>Joined</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  function deleteMember(id) {
-    if (!confirm('Remove this member?')) return;
-    const members = getMembers().filter(m => m.id !== id);
-    saveMembers(members);
-    renderAdmin();
-  }
-
-  function clearDatabase() {
+  window.clearDatabase = function() {
     if (!confirm('Are you sure you want to delete ALL members? This cannot be undone.')) return;
     localStorage.removeItem('grace_members');
     renderAdmin();
   }
+  window.deleteMember = function(id) {
+    if (!confirm('Remove this member?')) return;
+    var members = getMembers().filter(function(m) { return m.id !== id; });
+    saveMembers(members);
+    renderAdmin();
+  }
+  function renderAdmin() {
+    var members = getMembers();
+    var ministryLabels = {
+      youth: 'Youth Ministry', worship: 'Worship Team',
+      outreach: 'Outreach & Service', study: 'Bible Study', general: 'General Member'
+    };
+    var today = new Date().toDateString();
+    var todayCount = members.filter(function(m) { return new Date(m.joinedAt).toDateString() === today; }).length;
+    var newsletterCount = members.filter(function(m) { return m.newsletter; }).length;
+    var ministryCounts = {};
+    members.forEach(function(m) { ministryCounts[m.ministry] = (ministryCounts[m.ministry] || 0) + 1; });
+    var topEntries = Object.entries(ministryCounts).sort(function(a,b) { return b[1]-a[1]; });
+    var topMinistry = topEntries.length ? topEntries[0] : null;
+
+    document.getElementById('adminStats').innerHTML =
+      '<div class="stat-card"><span class="s-num">' + members.length + '</span><span class="s-label">Total Members</span></div>' +
+      '<div class="stat-card"><span class="s-num">' + todayCount + '</span><span class="s-label">Joined Today</span></div>' +
+      '<div class="stat-card"><span class="s-num">' + newsletterCount + '</span><span class="s-label">Newsletter Subscribers</span></div>' +
+      '<div class="stat-card"><span class="s-num">' + (topMinistry ? (ministryLabels[topMinistry[0]] || '—') : '—') + '</span><span class="s-label">Top Ministry Interest</span></div>';
+
+    if (!members.length) {
+      document.getElementById('membersTableWrap').innerHTML =
+        '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg><p style="font-size:0.9rem;">No members registered yet. Be the first!</p></div>';
+      return;
+    }
+
+    var rows = members.map(function(m) {
+      var joinDate = new Date(m.joinedAt).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+      return '<tr>' +
+        '<td><span style="color:var(--gold);font-size:0.75rem;">' + m.id + '</span></td>' +
+        '<td style="color:var(--cream);">' + m.firstName + ' ' + m.lastName + '</td>' +
+        '<td>' + m.email + '</td>' +
+        '<td>' + (m.phone || '—') + '</td>' +
+        '<td><span class="badge">' + (ministryLabels[m.ministry] || 'General') + '</span></td>' +
+        '<td>' + (m.newsletter ? '<span style="color:#6b9e75;">✓ Yes</span>' : '<span style="color:var(--stone);">No</span>') + '</td>' +
+        '<td>' + joinDate + '</td>' +
+        '<td><button onclick="deleteMember(\'' + m.id + '\')" style="background:none;border:none;color:var(--stone);cursor:pointer;font-size:0.8rem;" onmouseover="this.style.color='#c47070'" onmouseout="this.style.color='var(--stone)'">✕ Remove</button></td>' +
+      '</tr>';
+    }).join('');
+
+    document.getElementById('membersTableWrap').innerHTML =
+      '<div style="overflow-x:auto;"><table class="members-table"><thead><tr>' +
+      '<th>Member ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Ministry</th><th>Newsletter</th><th>Joined</th><th>Action</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
 
   // ─── PHONE FORMATTING ─────────────────────────────────────
   document.getElementById('phone').addEventListener('input', function() {
-    let v = this.value.replace(/\D/g,'');
-    if (v.length >= 6) v = '(' + v.slice(0,3) + ') ' + v.slice(3,6) + '-' + v.slice(6,10);
-    else if (v.length >= 3) v = '(' + v.slice(0,3) + ') ' + v.slice(3);
+    var v = this.value.replace(/\D/g,'');
+    if (v.length >= 6) { v = '(' + v.slice(0,3) + ') ' + v.slice(3,6) + '-' + v.slice(6,10); }
+    else if (v.length >= 3) { v = '(' + v.slice(0,3) + ') ' + v.slice(3); }
     this.value = v;
   });
+
+  // ─── CURSOR ───────────────────────────────────────────────
+  var cursor = document.getElementById('cursor');
+  var ring = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', function(e) {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    setTimeout(function() {
+      ring.style.left = e.clientX + 'px';
+      ring.style.top = e.clientY + 'px';
+    }, 60);
+  });
+  document.querySelectorAll('a, button, input, select').forEach(function(el) {
+    el.addEventListener('mouseenter', function() { ring.style.transform = 'translate(-50%,-50%) scale(1.8)'; });
+    el.addEventListener('mouseleave', function() { ring.style.transform = 'translate(-50%,-50%) scale(1)'; });
+  });
+})();
 </script>
 </body>
 </html>
