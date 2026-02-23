@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forum — Grace Community</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--cream:#f5f0e8;--warm-white:#fdfaf5;--gold:#b8963e;--gold-light:#d4b068;--deep:#1a1410;--bark:#3d2e1e;--stone:#8c7b68;--muted:#c4b49e;--error:#8b3a3a;--success:#3d6b4f}
+body{font-family:'Jost',sans-serif;background:var(--warm-white);min-height:100vh}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(253,250,245,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(184,150,62,.15)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--bark);text-decoration:none}.logo span{color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:20px}
+.nav-link{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--stone);text-decoration:none;transition:color .3s}.nav-link:hover{color:var(--gold)}
+.nav-user{font-size:.78rem;color:var(--bark);display:flex;align-items:center;gap:8px}
+.nav-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:.65rem;font-weight:600}
+.btn-nav{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;padding:8px 18px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:'Jost',sans-serif;transition:all .3s;text-decoration:none}.btn-nav:hover{background:var(--gold);color:white}
+.btn-nav.solid{background:var(--gold);color:white}
+
+/* LOGIN GATE */
+#loginGate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 20px;background:var(--deep)}
+.gate-box{background:var(--warm-white);max-width:420px;width:100%;padding:56px;position:relative}
+.gate-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold))}
+.gate-box h2{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--bark);margin-bottom:6px;text-align:center}
+.gate-box p{font-size:.82rem;color:var(--stone);text-align:center;margin-bottom:32px;font-weight:300}
+.fg{margin-bottom:18px}.fg label{display:block;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bark);opacity:.7;margin-bottom:8px}
+.fg input{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(61,46,30,.25);padding:10px 0;color:var(--deep);font-family:'Jost',sans-serif;font-size:.9rem;outline:none;transition:border-color .3s}
+.fg input:focus{border-color:var(--gold)}.fg input::placeholder{color:var(--muted)}
+.gate-err{display:none;font-size:.78rem;color:var(--error);background:rgba(139,58,58,.08);border-left:2px solid var(--error);padding:10px 14px;margin-bottom:14px}.gate-err.show{display:block}
+.btn-full{width:100%;padding:16px;background:var(--gold);color:white;border:none;font-family:'Jost',sans-serif;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:background .3s}
+.btn-full:hover{background:var(--bark)}.btn-full:disabled{opacity:.6;cursor:not-allowed}
+
+/* FORUM */
+#forumApp{display:none;padding-top:74px;min-height:100vh}
+.forum-layout{display:grid;grid-template-columns:270px 1fr;min-height:calc(100vh - 74px)}
+.sidebar{border-right:1px solid rgba(184,150,62,.15);padding:28px 20px;position:sticky;top:74px;height:calc(100vh - 74px);overflow-y:auto;background:rgba(253,250,245,.7)}
+.sb-title{font-size:.58rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid rgba(184,150,62,.12)}
+.cat-item{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;cursor:pointer;transition:all .2s;margin-bottom:3px;border-left:2px solid transparent}
+.cat-item:hover{background:rgba(184,150,62,.06);border-left-color:rgba(184,150,62,.3)}
+.cat-item.active{background:rgba(184,150,62,.1);border-left-color:var(--gold)}
+.cat-item.active .cat-name{color:var(--bark);font-weight:500}
+.cat-info{display:flex;align-items:center;gap:9px}
+.cat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cat-name{font-size:.8rem;color:var(--stone)}
+.cat-count{font-size:.62rem;color:var(--muted);background:rgba(184,150,62,.1);padding:1px 6px;border-radius:8px}
+.follow-cat-btn{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border:1px solid rgba(184,150,62,.3);background:transparent;color:var(--gold);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s}
+.follow-cat-btn:hover,.follow-cat-btn.on{background:var(--gold);color:white;border-color:var(--gold)}
+
+/* MAIN */
+.forum-main{padding:28px 44px}
+.forum-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid rgba(184,150,62,.15)}
+.forum-header h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--bark)}
+.forum-header h1 em{font-style:italic;color:var(--gold)}
+.forum-header p{font-size:.8rem;color:var(--stone);margin-top:4px}
+.btn-new{padding:11px 22px;background:var(--gold);color:white;border:none;font-family:'Jost',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s}
+.btn-new:hover{background:var(--bark)}.btn-new:disabled{opacity:.4;cursor:not-allowed;background:var(--stone)}
+.thread-filters{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:6px 13px;border:1px solid rgba(184,150,62,.2);background:transparent;color:var(--stone);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s}
+.filter-btn:hover,.filter-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(184,150,62,.06)}
+.search-wrap{margin-left:auto;position:relative}
+.search-wrap input{background:rgba(184,150,62,.05);border:1px solid rgba(184,150,62,.2);padding:7px 12px 7px 32px;font-family:'Jost',sans-serif;font-size:.78rem;color:var(--bark);outline:none;transition:border-color .3s;width:210px}
+.search-wrap input:focus{border-color:var(--gold)}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--stone);width:13px;height:13px}
+.thread-card{background:white;border:1px solid rgba(184,150,62,.12);padding:22px;margin-bottom:10px;cursor:pointer;transition:all .25s;position:relative}
+.thread-card:hover{border-color:rgba(184,150,62,.4);box-shadow:0 3px 16px rgba(184,150,62,.08)}
+.thread-card.followed::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+.thread-top{display:flex;align-items:flex-start;gap:12px}
+.t-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:.68rem;font-weight:600;flex-shrink:0}
+.t-body{flex:1;min-width:0}
+.t-cat{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.t-title{font-family:'Cormorant Garamond',serif;font-size:1.12rem;color:var(--bark);margin-bottom:5px;line-height:1.3}
+.t-excerpt{font-size:.78rem;color:var(--stone);line-height:1.6;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-meta{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:.68rem;color:var(--muted);flex-wrap:wrap}
+.t-meta svg{width:11px;height:11px}
+.follow-t-btn{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border:1px solid rgba(184,150,62,.25);background:transparent;color:var(--stone);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;margin-left:auto}
+.follow-t-btn:hover,.follow-t-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(184,150,62,.06)}
+.pin-badge,.file-badge{font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px}
+.pin-badge{background:rgba(184,150,62,.1);color:var(--gold);border:1px solid rgba(184,150,62,.2)}
+.file-badge{background:rgba(61,107,79,.08);color:var(--success);border:1px solid rgba(61,107,79,.15)}
+.empty-t{text-align:center;padding:70px 20px;color:var(--stone)}
+.empty-t svg{width:44px;height:44px;margin:0 auto 14px;display:block;opacity:.2}
+
+/* THREAD VIEW */
+#threadView{display:none}
+.back-btn{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--stone);background:none;border:none;cursor:pointer;padding:0;margin-bottom:22px;transition:color .3s;font-family:'Jost',sans-serif}
+.back-btn:hover{color:var(--gold)}
+.thread-post{background:white;border:1px solid rgba(184,150,62,.15);padding:32px;margin-bottom:14px}
+.thread-post.op{border-left:3px solid var(--gold)}
+.post-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+.post-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:.72rem;font-weight:600;flex-shrink:0}
+.post-author .name{font-size:.86rem;color:var(--bark);font-weight:500}
+.post-author .meta{font-size:.68rem;color:var(--muted);margin-top:2px}
+.post-content{font-size:.88rem;color:var(--bark);line-height:1.8;font-weight:300}
+.post-files{margin-top:14px;padding-top:14px;border-top:1px solid rgba(184,150,62,.1)}
+.files-title{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+.file-row{display:flex;align-items:center;gap:9px;padding:7px 11px;background:rgba(184,150,62,.04);border:1px solid rgba(184,150,62,.1);margin-bottom:5px;cursor:pointer;transition:background .2s;text-decoration:none}
+.file-row:hover{background:rgba(184,150,62,.1)}
+.file-row svg{width:15px;height:15px;color:var(--gold);flex-shrink:0}
+.file-row .fname{font-size:.78rem;color:var(--bark);flex:1}
+.file-row .fsize{font-size:.65rem;color:var(--stone)}
+.post-actions{display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(184,150,62,.08)}
+.like-btn{display:flex;align-items:center;gap:5px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border:1px solid rgba(184,150,62,.2);background:transparent;color:var(--stone);cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s}
+.like-btn:hover,.like-btn.liked{border-color:var(--gold);color:var(--gold);background:rgba(184,150,62,.06)}
+.reply-form{background:rgba(184,150,62,.04);border:1px solid rgba(184,150,62,.15);padding:26px;margin-top:22px}
+.reply-form h4{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--bark);margin-bottom:18px}
+.reply-ta{width:100%;background:white;border:1px solid rgba(184,150,62,.2);padding:13px;font-family:'Jost',sans-serif;font-size:.86rem;color:var(--bark);resize:vertical;min-height:90px;outline:none;transition:border-color .3s}
+.reply-ta:focus{border-color:var(--gold)}.reply-ta::placeholder{color:var(--muted)}
+
+/* FILE UPLOAD */
+.upload-area{border:2px dashed rgba(184,150,62,.25);padding:18px;text-align:center;cursor:pointer;transition:all .3s;margin-top:12px;position:relative}
+.upload-area:hover,.upload-area.dragover{border-color:var(--gold);background:rgba(184,150,62,.04)}
+.upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-area svg{width:26px;height:26px;color:var(--gold);margin:0 auto 7px;display:block;opacity:.6}
+.upload-area p{font-size:.76rem;color:var(--stone)}.upload-area span{font-size:.66rem;color:var(--muted)}
+.upload-list{margin-top:10px}
+.upload-item{display:flex;align-items:center;gap:9px;padding:7px 11px;background:white;border:1px solid rgba(184,150,62,.12);margin-bottom:5px}
+.upload-item .uname{font-size:.76rem;color:var(--bark);flex:1}
+.upload-item .usize{font-size:.63rem;color:var(--stone)}
+.upload-item .uremove{background:none;border:none;color:var(--stone);cursor:pointer;font-size:.8rem;transition:color .2s;padding:2px 5px}
+.upload-item .uremove:hover{color:var(--error)}
+.upload-progress{height:2px;background:rgba(184,150,62,.15);margin-top:4px;overflow:hidden}
+.upload-progress-bar{height:100%;background:var(--gold);transition:width .3s;width:0}
+.upload-err{font-size:.7rem;color:var(--error);margin-top:5px}
+.spinner-wrap{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--stone);margin-top:10px}
+.spinner{width:16px;height:16px;border:2px solid rgba(184,150,62,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* NEW THREAD MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,20,16,.85);z-index:300;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--warm-white);width:100%;max-width:660px;padding:44px;position:relative;margin:auto}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold))}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--stone);font-size:1.1rem;cursor:pointer;transition:color .2s}
+.modal-close:hover{color:var(--deep)}
+.modal-box h3{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--bark);margin-bottom:5px}
+.modal-sub{font-size:.78rem;color:var(--stone);margin-bottom:26px;font-weight:300}
+.mfg{margin-bottom:18px}.mfg label{display:block;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bark);opacity:.7;margin-bottom:8px}
+.mfg input,.mfg select,.mfg textarea{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(61,46,30,.2);padding:9px 0;color:var(--deep);font-family:'Jost',sans-serif;font-size:.88rem;outline:none;transition:border-color .3s}
+.mfg input:focus,.mfg select:focus,.mfg textarea:focus{border-color:var(--gold)}
+.mfg input::placeholder,.mfg textarea::placeholder{color:var(--muted)}
+.mfg textarea{resize:vertical;min-height:110px}.mfg select{-webkit-appearance:none}
+.modal-err{display:none;font-size:.76rem;color:var(--error);background:rgba(139,58,58,.08);border-left:2px solid var(--error);padding:9px 13px;margin-bottom:12px}.modal-err.show{display:block}
+.modal-actions{display:flex;gap:10px;margin-top:22px}
+.btn-cancel{flex:1;padding:13px;background:transparent;border:1px solid rgba(184,150,62,.25);color:var(--stone);font-family:'Jost',sans-serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-post{flex:2;padding:13px;background:var(--gold);color:white;border:none;font-family:'Jost',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s}
+.btn-post:hover{background:var(--bark)}.btn-post:disabled{opacity:.5;cursor:not-allowed}
+.toast{position:fixed;bottom:28px;right:28px;background:var(--bark);color:var(--cream);padding:12px 22px;font-size:.76rem;z-index:500;transform:translateY(60px);opacity:0;transition:all .4s;border-left:3px solid var(--gold)}
+.toast.show{transform:translateY(0);opacity:1}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(253,250,245,.7);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading-overlay.show{display:flex}
+.loading-overlay .spinner{width:36px;height:36px;border-width:3px}
+.loading-overlay p{font-size:.8rem;color:var(--stone);letter-spacing:.1em}
+@media(max-width:900px){nav{padding:16px 20px}.forum-layout{grid-template-columns:1fr}.sidebar{display:none}.forum-main{padding:20px 16px}.modal-box{padding:28px 20px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Grace <span>Community</span></a>
+  <div class="nav-right">
+    <div class="nav-user" id="navUser" style="display:none">
+      <div class="nav-avatar" id="navAvatar"></div>
+      <span id="navName" style="font-size:.82rem;color:var(--bark)"></span>
+    </div>
+    <a href="index.html" class="nav-link">Home</a>
+    <button class="btn-nav" id="btnNavLogout" style="display:none">Sign Out</button>
+    <a href="register.html" class="btn-nav solid" id="btnNavRegister">Register</a>
+  </div>
+</nav>
+
+<!-- LOGIN GATE -->
+<div id="loginGate">
+  <div class="gate-box">
+    <h2>Forum Access</h2>
+    <p>Sign in with your Grace Community account to join discussions.</p>
+    <div class="gate-err" id="gateErr"></div>
+    <div class="fg"><label>Email Address</label><input type="email" id="gateEmail" placeholder="your@email.com"></div>
+    <div class="fg"><label>Password</label><input type="password" id="gatePass" placeholder="••••••••"></div>
+    <button class="btn-full" id="btnGateLogin">Sign In to Forum</button>
+    <div style="text-align:center;margin-top:14px;font-size:.78rem;color:var(--stone)">No account? <a href="register.html" style="color:var(--gold);text-decoration:none">Register here</a></div>
+  </div>
+</div>
+
+<!-- FORUM APP -->
+<div id="forumApp">
+  <div class="forum-layout">
+    <div class="sidebar">
+      <div id="sidebarUserInfo" style="padding:14px;background:rgba(184,150,62,.06);border:1px solid rgba(184,150,62,.12);margin-bottom:22px">
+        <div style="font-size:.84rem;color:var(--bark);font-weight:500" id="sbName"></div>
+        <div style="font-size:.7rem;color:var(--stone);margin-top:3px" id="sbSince"></div>
+      </div>
+      <div class="sb-title">Browse Categories</div>
+      <div class="cat-item active" onclick="selectCat('all')" id="cat-all">
+        <div class="cat-info"><div class="cat-dot" style="background:var(--gold)"></div><span class="cat-name">All Discussions</span></div>
+        <span class="cat-count" id="count-all">0</span>
+      </div>
+      <div class="cat-item" onclick="selectCat('following')" id="cat-following">
+        <div class="cat-info"><div class="cat-dot" style="background:#6b9e75"></div><span class="cat-name">Following</span></div>
+        <span class="cat-count" id="count-following">0</span>
+      </div>
+      <div id="catList"></div>
+    </div>
+
+    <div class="forum-main">
+      <div id="threadListView">
+        <div class="forum-header">
+          <div>
+            <h1 id="forumTitle">All <em>Discussions</em></h1>
+            <p id="forumDesc">Browse all community discussions</p>
+          </div>
+          <button class="btn-new" id="btnNewThread" disabled title="You must be assigned to a category to post">+ New Thread</button>
+        </div>
+        <div class="thread-filters">
+          <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setFilter('recent',this)">Recent</button>
+          <button class="filter-btn" onclick="setFilter('popular',this)">Popular</button>
+          <button class="filter-btn" onclick="setFilter('mine',this)">My Threads</button>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="threadSearch" placeholder="Search discussions..." oninput="renderThreads()">
+          </div>
+        </div>
+        <div id="threadList"></div>
+      </div>
+
+      <div id="threadView">
+        <button class="back-btn" onclick="backToList()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back to Discussions
+        </button>
+        <div id="threadContent"></div>
+        <div class="reply-form" id="replyForm">
+          <h4>Post a Reply</h4>
+          <textarea class="reply-ta" id="replyText" placeholder="Share your thoughts..."></textarea>
+          <div class="upload-area" id="replyUploadArea">
+            <input type="file" id="replyFiles" multiple onchange="handleFiles(this,'reply')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p>Drag &amp; drop or click to attach files</p>
+            <span>Max 250MB per file — any type accepted</span>
+          </div>
+          <div class="upload-list" id="replyUploadList"></div>
+          <div class="upload-err" id="replyUploadErr"></div>
+          <div id="replyUploadProgress" style="display:none" class="spinner-wrap"><div class="spinner"></div><span>Uploading files...</span></div>
+          <button class="btn-post" style="width:100%;margin-top:14px" id="btnPostReply">Post Reply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW THREAD MODAL -->
+<div class="modal-overlay" id="newThreadModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    <h3>Start a New Thread</h3>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="modal-err" id="modalErr"></div>
+    <div class="mfg"><label>Category *</label><select id="threadCat"></select></div>
+    <div class="mfg"><label>Thread Title *</label><input type="text" id="threadTitle" placeholder="What would you like to discuss?"></div>
+    <div class="mfg"><label>Your Message *</label><textarea id="threadBody" placeholder="Share your thoughts..."></textarea></div>
+    <div class="mfg">
+      <label>Attachments (optional, max 250MB each)</label>
+      <div class="upload-area" id="newUploadArea">
+        <input type="file" id="newThreadFiles" multiple onchange="handleFiles(this,'new')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p>Drag &amp; drop or click to browse</p>
+        <span>Max 250MB per file</span>
+      </div>
+      <div class="upload-list" id="newUploadList"></div>
+      <div class="upload-err" id="newUploadErr"></div>
+    </div>
+    <div id="newUploadProgress" style="display:none" class="spinner-wrap"><div class="spinner"></div><span>Uploading files...</span></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-post" id="btnSubmitThread">Post Thread</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p id="loadingMsg">Loading...</p></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var currentUser = null;
+var currentCat = 'all';
+var currentFilter = 'all';
+var currentThread = null;
+var newPendingFiles = [];
+var replyPendingFiles = [];
+var COLORS = ['#b8963e','#3d6b4f','#6b4f3d','#4f6b8c','#8c4f6b'];
+var MAX_FILE = 250 * 1024 * 1024;
+
+/* ── UTILS ── */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtSize(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB'}
+function ago(iso){var d=Date.now()-new Date(iso).getTime(),m=Math.floor(d/60000);if(m<1)return'just now';if(m<60)return m+'m ago';var h=Math.floor(m/60);if(h<24)return h+'h ago';var dy=Math.floor(h/24);if(dy<30)return dy+'d ago';return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function avatarColor(id){return COLORS[(id||'x').charCodeAt((id||'x').length-1)%COLORS.length]}
+function initials(name){return(name||'??').split(' ').map(function(n){return n.charAt(0)}).join('').toUpperCase().slice(0,2)}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000)}
+function loading(show,msg){var o=document.getElementById('loadingOverlay');o.classList[show?'add':'remove']('show');if(msg)document.getElementById('loadingMsg').textContent=msg}
+function hashPw(s){var h=0,i;for(i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h=h&h}return'h_'+Math.abs(h).toString(16)}
+
+/* ── LOGIN ── */
+document.getElementById('btnGateLogin').addEventListener('click', doLogin);
+document.getElementById('gatePass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+document.getElementById('gateEmail').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('gatePass').focus()});
+
+async function doLogin(){
+  var email=document.getElementById('gateEmail').value.trim();
+  var pass=document.getElementById('gatePass').value;
+  var errEl=document.getElementById('gateErr');
+  errEl.classList.remove('show');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.classList.add('show');return}
+  var btn=document.getElementById('btnGateLogin');
+  btn.disabled=true;btn.textContent='Signing in...';
+  var res = await sb.from('members').select('*').eq('email',email.toLowerCase()).eq('password',hashPw(pass)).maybeSingle();
+  btn.disabled=false;btn.textContent='Sign In to Forum';
+  if(!res.data){errEl.textContent='Invalid email or password.';errEl.classList.add('show');return}
+  currentUser=res.data;
+  sessionStorage.setItem('grace_session',JSON.stringify({id:currentUser.id}));
+  showForum();
+}
+
+document.getElementById('btnNavLogout').addEventListener('click',function(){
+  sessionStorage.removeItem('grace_session');
+  currentUser=null;location.reload();
+});
+
+/* ── INIT ── */
+async function init(){
+  var s=sessionStorage.getItem('grace_session');
+  if(s){
+    var sid=JSON.parse(s).id;
+    var res=await sb.from('members').select('*').eq('id',sid).maybeSingle();
+    if(res.data){currentUser=res.data;showForum();return}
+  }
+  document.getElementById('loginGate').style.display='flex';
+}
+
+async function showForum(){
+  document.getElementById('loginGate').style.display='none';
+  document.getElementById('forumApp').style.display='block';
+  document.getElementById('btnNavLogout').style.display='block';
+  document.getElementById('btnNavRegister').style.display='none';
+  document.getElementById('navUser').style.display='flex';
+  var nm=currentUser.first_name+' '+currentUser.last_name;
+  document.getElementById('navAvatar').textContent=initials(nm);
+  document.getElementById('navAvatar').style.background=avatarColor(currentUser.id);
+  document.getElementById('navName').textContent=nm;
+  document.getElementById('sbName').textContent=nm;
+  document.getElementById('sbSince').textContent='Member since '+new Date(currentUser.joined_at).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  await loadSidebar();
+  await renderThreads();
+  updateNewBtn();
+}
+
+/* ── SIDEBAR ── */
+async function loadSidebar(){
+  var cats=await sb.from('categories').select('*').order('name');
+  var threads=await sb.from('threads').select('id,category_id');
+  var fc=currentUser.followed_categories||[];
+  var ft=currentUser.followed_threads||[];
+  var allThreads=threads.data||[];
+  var followingCount=allThreads.filter(function(t){return ft.includes(t.id)||fc.includes(t.category_id)}).length;
+  document.getElementById('count-all').textContent=allThreads.length;
+  document.getElementById('count-following').textContent=followingCount;
+  var html='';
+  (cats.data||[]).forEach(function(cat){
+    var cnt=allThreads.filter(function(t){return t.category_id===cat.id}).length;
+    var isOn=fc.includes(cat.id);
+    html+='<div class="cat-item'+(currentCat===cat.id?' active':'')+'" id="cat-'+cat.id+'" onclick="selectCat(\''+cat.id+'\')">'+
+      '<div class="cat-info"><div class="cat-dot" style="background:'+cat.color+'"></div><span class="cat-name">'+esc(cat.name)+'</span></div>'+
+      '<div style="display:flex;align-items:center;gap:5px">'+
+        '<span class="cat-count">'+cnt+'</span>'+
+        '<button class="follow-cat-btn'+(isOn?' on':'')+'" onclick="event.stopPropagation();toggleFollowCat(\''+cat.id+'\')">'+( isOn?'&#10003;':'Follow')+'</button>'+
+      '</div>'+
+    '</div>';
+  });
+  document.getElementById('catList').innerHTML=html||'<div style="padding:12px;font-size:.78rem;color:var(--stone);text-align:center">No categories yet.</div>';
+}
+
+async function selectCat(id){
+  currentCat=id;
+  document.querySelectorAll('.cat-item').forEach(function(el){el.classList.remove('active')});
+  var el=document.getElementById('cat-'+id);
+  if(el)el.classList.add('active');
+  if(id==='all'){document.getElementById('forumTitle').innerHTML='All <em>Discussions</em>';document.getElementById('forumDesc').textContent='Browse all community discussions'}
+  else if(id==='following'){document.getElementById('forumTitle').innerHTML='<em>Following</em>';document.getElementById('forumDesc').textContent='Discussions you are following'}
+  else{
+    var res=await sb.from('categories').select('*').eq('id',id).maybeSingle();
+    if(res.data){document.getElementById('forumTitle').innerHTML=esc(res.data.name)+' <em>Discussions</em>';document.getElementById('forumDesc').textContent=res.data.description||''}
+  }
+  updateNewBtn();
+  backToList();
+  await renderThreads();
+}
+
+async function toggleFollowCat(catId){
+  var fc=(currentUser.followed_categories||[]).slice();
+  var idx=fc.indexOf(catId);
+  if(idx>=0)fc.splice(idx,1); else fc.push(catId);
+  await sb.from('members').update({followed_categories:fc}).eq('id',currentUser.id);
+  currentUser.followed_categories=fc;
+  showToast(idx<0?'Following category!':'Unfollowed category');
+  await loadSidebar();
+  await renderThreads();
+}
+
+function updateNewBtn(){
+  var ac=currentUser.assigned_categories||[];
+  var canPost=ac.length>0&&(currentCat==='all'||currentCat==='following'||ac.includes(currentCat));
+  var btn=document.getElementById('btnNewThread');
+  btn.disabled=!canPost;
+  btn.title=canPost?'':'You need to be assigned to a category by admin to post';
+}
+
+/* ── THREAD LIST ── */
+async function renderThreads(){
+  var q=sb.from('threads').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false});
+  if(currentCat==='following'){
+    var fc=currentUser.followed_categories||[];
+    var ft=currentUser.followed_threads||[];
+    if(!fc.length&&!ft.length){document.getElementById('threadList').innerHTML='<div class="empty-t"><p>You are not following any categories or threads yet.</p></div>';return}
+  } else if(currentCat!=='all'){
+    q=q.eq('category_id',currentCat);
+  }
+  if(currentFilter==='mine') q=q.eq('author_id',currentUser.id);
+  var res=await q;
+  var threads=res.data||[];
+
+  if(currentCat==='following'){
+    var fc=currentUser.followed_categories||[];
+    var ft=currentUser.followed_threads||[];
+    threads=threads.filter(function(t){return ft.includes(t.id)||fc.includes(t.category_id)});
+  }
+  if(currentFilter==='popular') threads.sort(function(a,b){return(b.replies||0)-(a.replies||0)});
+  var search=(document.getElementById('threadSearch').value||'').toLowerCase().trim();
+  if(search) threads=threads.filter(function(t){return t.title.toLowerCase().includes(search)||t.body.toLowerCase().includes(search)});
+
+  var cats=await sb.from('categories').select('id,name,color');
+  var catMap={};(cats.data||[]).forEach(function(c){catMap[c.id]=c});
+  var ft=currentUser.followed_threads||[];
+  var fc=currentUser.followed_categories||[];
+
+  if(!threads.length){
+    document.getElementById('threadList').innerHTML='<div class="empty-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>No discussions found.</p></div>';
+    return;
+  }
+  var html='';
+  threads.forEach(function(t){
+    var cat=catMap[t.category_id]||{name:'General',color:'#b8963e'};
+    var isFollowed=ft.includes(t.id)||fc.includes(t.category_id);
+    var hasFiles=(t.files||[]).length>0;
+    html+='<div class="thread-card'+(isFollowed?' followed':'')+'" onclick="openThread(\''+t.id+'\')">'+
+      (t.pinned?'<span class="pin-badge" style="position:absolute;top:14px;right:14px">&#128204; Pinned</span>':'')+
+      '<div class="thread-top">'+
+        '<div class="t-avatar" style="background:'+avatarColor(t.author_id)+'">'+initials(t.author_name)+'</div>'+
+        '<div class="t-body">'+
+          '<div class="t-cat"><span style="width:6px;height:6px;border-radius:50%;background:'+cat.color+';display:inline-block"></span>'+esc(cat.name)+'</div>'+
+          '<div class="t-title">'+esc(t.title)+'</div>'+
+          '<div class="t-excerpt">'+esc((t.body||'').substring(0,140))+'</div>'+
+          '<div class="t-meta">'+
+            '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(t.author_name)+'</span>'+
+            '<span>'+ago(t.created_at)+'</span>'+
+            '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'+(t.replies||0)+' replies</span>'+
+            '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'+(t.views||0)+'</span>'+
+            (hasFiles?'<span class="file-badge">&#128206; '+(t.files||[]).length+' file'+((t.files||[]).length>1?'s':'')+'</span>':'')+
+            '<button class="follow-t-btn'+(isFollowed?' on':'')+'" onclick="event.stopPropagation();toggleFollowThread(\''+t.id+'\')">'+( isFollowed?'&#10003; Following':'Follow')+'</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  });
+  document.getElementById('threadList').innerHTML=html;
+}
+
+function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');renderThreads()}
+
+async function toggleFollowThread(tid){
+  var ft=(currentUser.followed_threads||[]).slice();
+  var idx=ft.indexOf(tid);
+  if(idx>=0)ft.splice(idx,1); else ft.push(tid);
+  await sb.from('members').update({followed_threads:ft}).eq('id',currentUser.id);
+  currentUser.followed_threads=ft;
+  showToast(idx<0?'Following thread!':'Unfollowed thread');
+  await loadSidebar();
+  await renderThreads();
+}
+
+/* ── THREAD VIEW ── */
+async function openThread(tid){
+  loading(true,'Loading thread...');
+  // Increment views
+  await sb.from('threads').update({views:sb.rpc?undefined:undefined}).eq('id',tid);
+  var tres=await sb.from('threads').select('*').eq('id',tid).maybeSingle();
+  if(!tres.data){loading(false);showToast('Thread not found.');return}
+  var t=tres.data;
+  await sb.from('threads').update({views:(t.views||0)+1}).eq('id',tid);
+  t.views=(t.views||0)+1;
+  var pres=await sb.from('posts').select('*').eq('thread_id',tid).order('created_at');
+  var cats=await sb.from('categories').select('id,name,color');
+  var catMap={};(cats.data||[]).forEach(function(c){catMap[c.id]=c});
+  currentThread=t;
+  document.getElementById('threadListView').style.display='none';
+  document.getElementById('threadView').style.display='block';
+  renderThreadView(t,pres.data||[],catMap);
+  loading(false);
+}
+
+function renderThreadView(t,posts,catMap){
+  var cat=catMap[t.category_id]||{name:'General',color:'#b8963e'};
+  var ft=currentUser.followed_threads||[];
+  var isFollowed=ft.includes(t.id);
+  var html=
+    '<div style="margin-bottom:18px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">'+
+      '<div>'+
+        '<div style="font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:'+cat.color+';margin-bottom:7px;display:flex;align-items:center;gap:5px">'+
+          '<span style="width:7px;height:7px;border-radius:50%;background:'+cat.color+';display:inline-block"></span>'+esc(cat.name)+
+        '</div>'+
+        '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.8rem;color:var(--bark);font-weight:300;margin-bottom:6px">'+esc(t.title)+'</h2>'+
+        '<div style="font-size:.72rem;color:var(--muted)">'+(t.replies||0)+' replies &bull; '+(t.views||0)+' views &bull; '+ago(t.created_at)+'</div>'+
+      '</div>'+
+      '<button class="follow-t-btn'+(isFollowed?' on':'')+'" onclick="toggleFollowThread(\''+t.id+'\')">'+( isFollowed?'&#10003; Following':'Follow Thread')+'</button>'+
+    '</div>';
+
+  var allPosts=[{id:'op',author_id:t.author_id,author_name:t.author_name,body:t.body,created_at:t.created_at,files:t.files||[],likes:t.likes||[],isOp:true}].concat(posts);
+  allPosts.forEach(function(post){
+    var liked=(post.likes||[]).includes(currentUser.id);
+    var filesHtml='';
+    if((post.files||[]).length){
+      filesHtml='<div class="post-files"><div class="files-title">Attachments ('+post.files.length+')</div>';
+      post.files.forEach(function(f){
+        filesHtml+='<a class="file-row" href="'+esc(f.url)+'" target="_blank" download="'+esc(f.name)+'">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'+
+          '<span class="fname">'+esc(f.name)+'</span><span class="fsize">'+fmtSize(f.size||0)+'</span>'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px;color:var(--stone)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
+        '</a>';
+      });
+      filesHtml+='</div>';
+    }
+    html+='<div class="thread-post'+(post.isOp?' op':'')+'">'+
+      '<div class="post-header">'+
+        '<div class="post-avatar" style="background:'+avatarColor(post.author_id)+'">'+initials(post.author_name)+'</div>'+
+        '<div class="post-author">'+
+          '<div class="name">'+esc(post.author_name)+(post.isOp?' <span style="font-size:.55rem;padding:2px 6px;background:rgba(184,150,62,.12);color:var(--gold);margin-left:6px;letter-spacing:.1em;text-transform:uppercase">OP</span>':'')+'</div>'+
+          '<div class="meta">'+ago(post.created_at)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="post-content">'+esc(post.body).replace(/\n/g,'<br>')+'</div>'+
+      filesHtml+
+      '<div class="post-actions">'+
+        '<button class="like-btn'+(liked?' liked':'')+'" onclick="toggleLike(\''+t.id+'\',\''+post.id+'\','+!!post.isOp+')">'+
+          '<svg viewBox="0 0 24 24" fill="'+(liked?'var(--gold)':'none')+'" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>'+
+          (post.likes||[]).length+
+        '</button>'+
+      '</div>'+
+    '</div>';
+  });
+  document.getElementById('threadContent').innerHTML=html;
+  replyPendingFiles=[];
+  document.getElementById('replyUploadList').innerHTML='';
+  document.getElementById('replyText').value='';
+}
+
+function backToList(){
+  document.getElementById('threadListView').style.display='block';
+  document.getElementById('threadView').style.display='none';
+  currentThread=null;
+  renderThreads();
+}
+
+async function toggleLike(threadId,postId,isOp){
+  if(isOp){
+    var tres=await sb.from('threads').select('likes').eq('id',threadId).maybeSingle();
+    var likes=(tres.data.likes||[]).slice();
+    var idx=likes.indexOf(currentUser.id);
+    if(idx>=0)likes.splice(idx,1); else likes.push(currentUser.id);
+    await sb.from('threads').update({likes:likes}).eq('id',threadId);
+  } else {
+    var pres=await sb.from('posts').select('likes').eq('id',postId).maybeSingle();
+    var likes=(pres.data.likes||[]).slice();
+    var idx=likes.indexOf(currentUser.id);
+    if(idx>=0)likes.splice(idx,1); else likes.push(currentUser.id);
+    await sb.from('posts').update({likes:likes}).eq('id',postId);
+  }
+  // Reload thread view
+  var tres2=await sb.from('threads').select('*').eq('id',threadId).maybeSingle();
+  var pres2=await sb.from('posts').select('*').eq('thread_id',threadId).order('created_at');
+  var cats=await sb.from('categories').select('id,name,color');
+  var catMap={};(cats.data||[]).forEach(function(c){catMap[c.id]=c});
+  currentThread=tres2.data;
+  renderThreadView(tres2.data,pres2.data||[],catMap);
+}
+
+/* ── FILE HANDLING ── */
+function handleFiles(input,ctx){
+  var files=Array.from(input.files);
+  var listEl=document.getElementById(ctx==='new'?'newUploadList':'replyUploadList');
+  var errEl=document.getElementById(ctx==='new'?'newUploadErr':'replyUploadErr');
+  var store=ctx==='new'?newPendingFiles:replyPendingFiles;
+  errEl.textContent='';
+  files.forEach(function(file){
+    if(file.size>MAX_FILE){errEl.textContent='"'+file.name+'" exceeds 250MB and was skipped.';return}
+    for(var i=0;i<store.length;i++){if(store[i].name===file.name)return}
+    var uid='f'+Date.now()+Math.random().toString(36).slice(2);
+    store.push({uid:uid,file:file,name:file.name,size:file.size});
+    var div=document.createElement('div');div.className='upload-item';div.id=uid;
+    div.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:15px;height:15px;color:var(--gold);flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'+
+      '<span class="uname">'+esc(file.name)+'</span><span class="usize">'+fmtSize(file.size)+'</span>'+
+      '<button class="uremove" onclick="removeFile(\''+uid+'\',\''+ctx+'\')">&#x2715;</button>';
+    listEl.appendChild(div);
+  });
+  input.value='';
+}
+
+function removeFile(uid,ctx){
+  var store=ctx==='new'?newPendingFiles:replyPendingFiles;
+  for(var i=0;i<store.length;i++){if(store[i].uid===uid){store.splice(i,1);break}}
+  var el=document.getElementById(uid);if(el)el.remove();
+}
+
+async function uploadFiles(pendingFiles,progressEl){
+  var uploaded=[];
+  if(!pendingFiles.length) return uploaded;
+  if(progressEl) progressEl.style.display='flex';
+  for(var i=0;i<pendingFiles.length;i++){
+    var pf=pendingFiles[i];
+    var path='uploads/'+Date.now()+'-'+pf.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var res=await sb.storage.from('forum-files').upload(path,pf.file,{cacheControl:'3600',upsert:false});
+    if(res.error){showToast('Upload failed for '+pf.name+': '+res.error.message);continue}
+    var urlRes=sb.storage.from('forum-files').getPublicUrl(path);
+    uploaded.push({name:pf.name,size:pf.size,type:pf.file.type,path:path,url:urlRes.data.publicUrl});
+  }
+  if(progressEl) progressEl.style.display='none';
+  return uploaded;
+}
+
+/* ── NEW THREAD ── */
+document.getElementById('btnNewThread').addEventListener('click',async function(){
+  if(this.disabled) return;
+  newPendingFiles=[];
+  document.getElementById('newUploadList').innerHTML='';
+  document.getElementById('newUploadErr').textContent='';
+  document.getElementById('modalErr').classList.remove('show');
+  document.getElementById('threadTitle').value='';
+  document.getElementById('threadBody').value='';
+  var cats=await sb.from('categories').select('*').order('name');
+  var ac=currentUser.assigned_categories||[];
+  var allowed=(cats.data||[]).filter(function(c){return ac.includes(c.id)});
+  var sel=document.getElementById('threadCat');
+  sel.innerHTML='';
+  allowed.forEach(function(c){
+    var opt=document.createElement('option');opt.value=c.id;opt.textContent=c.name;
+    if(currentCat===c.id) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('modalSub').textContent='Posting in: '+allowed.map(function(c){return c.name}).join(', ');
+  document.getElementById('newThreadModal').classList.add('open');
+});
+
+function closeModal(){document.getElementById('newThreadModal').classList.remove('open')}
+document.getElementById('newThreadModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+document.getElementById('btnSubmitThread').addEventListener('click',async function(){
+  var title=document.getElementById('threadTitle').value.trim();
+  var body=document.getElementById('threadBody').value.trim();
+  var catId=document.getElementById('threadCat').value;
+  var errEl=document.getElementById('modalErr');
+  errEl.classList.remove('show');
+  if(!catId){errEl.textContent='Please select a category.';errEl.classList.add('show');return}
+  if(!title){errEl.textContent='Please enter a title.';errEl.classList.add('show');return}
+  if(!body){errEl.textContent='Please write your message.';errEl.classList.add('show');return}
+  var btn=this;btn.disabled=true;btn.textContent='Posting...';
+  var files=await uploadFiles(newPendingFiles,document.getElementById('newUploadProgress'));
+  var thread={id:'T-'+Date.now(),category_id:catId,title:title,body:body,author_id:currentUser.id,author_name:currentUser.first_name+' '+currentUser.last_name,replies:0,views:0,likes:[],pinned:false,files:files,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  var res=await sb.from('threads').insert(thread);
+  btn.disabled=false;btn.textContent='Post Thread';
+  if(res.error){errEl.textContent='Error: '+res.error.message;errEl.classList.add('show');return}
+  closeModal();
+  showToast('Thread posted!');
+  await loadSidebar();
+  await renderThreads();
+  setTimeout(function(){openThread(thread.id)},300);
+});
+
+/* ── REPLY ── */
+document.getElementById('btnPostReply').addEventListener('click',async function(){
+  var body=document.getElementById('replyText').value.trim();
+  if(!body&&!replyPendingFiles.length){showToast('Please write a reply or attach a file.');return}
+  if(!currentThread){return}
+  var btn=this;btn.disabled=true;btn.textContent='Posting...';
+  var files=await uploadFiles(replyPendingFiles,document.getElementById('replyUploadProgress'));
+  var post={id:'P-'+Date.now(),thread_id:currentThread.id,author_id:currentUser.id,author_name:currentUser.first_name+' '+currentUser.last_name,body:body||'(attachment)',likes:[],files:files,created_at:new Date().toISOString()};
+  var res=await sb.from('posts').insert(post);
+  if(!res.error) await sb.from('threads').update({replies:(currentThread.replies||0)+1,updated_at:new Date().toISOString()}).eq('id',currentThread.id);
+  btn.disabled=false;btn.textContent='Post Reply';
+  if(res.error){showToast('Error: '+res.error.message);return}
+  replyPendingFiles=[];
+  document.getElementById('replyUploadList').innerHTML='';
+  document.getElementById('replyText').value='';
+  showToast('Reply posted!');
+  await openThread(currentThread.id);
+});
+
+/* ── DRAG & DROP ── */
+['newUploadArea','replyUploadArea'].forEach(function(id){
+  var el=document.getElementById(id);if(!el)return;
+  el.addEventListener('dragover',function(e){e.preventDefault();el.classList.add('dragover')});
+  el.addEventListener('dragleave',function(){el.classList.remove('dragover')});
+  el.addEventListener('drop',function(e){
+    e.preventDefault();el.classList.remove('dragover');
+    var ctx=id==='newUploadArea'?'new':'reply';
+    var inp=document.getElementById(ctx==='new'?'newThreadFiles':'replyFiles');
+    inp.files=e.dataTransfer.files;handleFiles(inp,ctx);
+  });
+});
+
+init();
+</script>
+</body>
+</html>
