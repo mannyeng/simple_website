@@ -389,11 +389,13 @@ async function loadSidebar(){
   (cats.data||[]).forEach(function(cat){
     var cnt=allThreads.filter(function(t){return t.category_id===cat.id}).length;
     var isOn=fc.includes(cat.id);
-    html+='<div class="cat-item'+(currentCat===cat.id?' active':'')+'" id="cat-'+cat.id+'" onclick="selectCat(\''+cat.id+'\')">'+
+    var isJoined=(currentUser.assigned_categories||[]).includes(cat.id);
+    html+='<div class="cat-item'+(currentCat===cat.id?' active':'')+'" id="cat-'+cat.id+'" onclick="selectCat(\''+(cat.id)+'\')">'+
       '<div class="cat-info"><div class="cat-dot" style="background:'+cat.color+'"></div><span class="cat-name">'+esc(cat.name)+'</span></div>'+
-      '<div style="display:flex;align-items:center;gap:5px">'+
+      '<div style="display:flex;align-items:center;gap:4px">'+
         '<span class="cat-count">'+cnt+'</span>'+
-        '<button class="follow-cat-btn'+(isOn?' on':'')+'" onclick="event.stopPropagation();toggleFollowCat(\''+cat.id+'\')">'+( isOn?'&#10003;':'Follow')+'</button>'+
+        '<button class="follow-cat-btn'+(isJoined?' on':'')+'" title="'+(isJoined?'Leave category':'Join to post here')+'" onclick="event.stopPropagation();toggleJoinCat(\''+(cat.id)+'\')">'+(isJoined?'&#10003; Joined':'+ Join')+'</button>'+
+        '<button class="follow-cat-btn'+(isOn?' on':'')+'" title="'+(isOn?'Unfollow':'Follow discussions')+'" onclick="event.stopPropagation();toggleFollowCat(\''+(cat.id)+'\')">'+(isOn?'&#9733;':'&#9734;')+'</button>'+
       '</div>'+
     '</div>';
   });
@@ -423,6 +425,30 @@ async function toggleFollowCat(catId){
   await sb.from('members').update({followed_categories:fc}).eq('id',currentUser.id);
   currentUser.followed_categories=fc;
   showToast(idx<0?'Following category!':'Unfollowed category');
+  await loadSidebar();
+  await renderThreads();
+}
+
+async function toggleJoinCat(catId){
+  var ac=(currentUser.assigned_categories||[]).slice();
+  var fc=(currentUser.followed_categories||[]).slice();
+  var idx=ac.indexOf(catId);
+  if(idx>=0){
+    ac.splice(idx,1);
+    // Also unfollow when leaving
+    var fi=fc.indexOf(catId);
+    if(fi>=0) fc.splice(fi,1);
+    showToast('Left category — you can no longer post there');
+  } else {
+    ac.push(catId);
+    // Auto-follow when joining
+    if(!fc.includes(catId)) fc.push(catId);
+    showToast('Joined category! You can now post there.');
+  }
+  await sb.from('members').update({assigned_categories:ac, followed_categories:fc}).eq('id',currentUser.id);
+  currentUser.assigned_categories=ac;
+  currentUser.followed_categories=fc;
+  updateNewBtn();
   await loadSidebar();
   await renderThreads();
 }
