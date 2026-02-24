@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grace Community</title>
+<title>Catechist's Forum</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -125,21 +125,6 @@
   }
   .btn-login:hover { background: var(--gold); color: var(--warm-white); }
 
-  .btn-donate {
-    font-size: 0.72rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 10px 24px;
-    background: var(--gold);
-    color: var(--warm-white);
-    cursor: none;
-    transition: all 0.3s ease;
-    font-family: 'Jost', sans-serif;
-    font-weight: 500;
-    text-decoration: none;
-    border: 1px solid var(--gold);
-  }
-  .btn-donate:hover { background: var(--bark); border-color: var(--bark); }
 
   /* HERO */
   .hero {
@@ -509,7 +494,7 @@
   .forum-post {
     background: var(--warm-white);
     padding: 36px;
-    cursor: none;
+    cursor: pointer;
     transition: background 0.3s ease;
     border-bottom: 1px solid rgba(184,150,62,0.1);
   }
@@ -675,98 +660,6 @@
   }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-  /* DONATE */
-  #donate {
-    background: linear-gradient(160deg, var(--cream) 0%, var(--warm-white) 100%);
-    text-align: center;
-  }
-
-  .donate-inner { max-width: 800px; margin: 0 auto; }
-
-  .donate-inner .section-label { justify-content: center; }
-  .donate-inner .section-label::before { display: none; }
-
-  .donate-inner h2 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.8rem, 5vw, 4.2rem);
-    font-weight: 300;
-    color: var(--bark);
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-  .donate-inner h2 em { color: var(--gold); font-style: italic; }
-
-  .donate-inner > p {
-    color: var(--stone);
-    font-size: 1rem;
-    line-height: 1.8;
-    margin-bottom: 48px;
-    font-weight: 300;
-  }
-
-  .donate-amounts {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 32px;
-  }
-
-  .amount-btn {
-    padding: 16px 32px;
-    border: 1px solid rgba(184,150,62,0.3);
-    background: transparent;
-    cursor: none;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.85rem;
-    color: var(--bark);
-    transition: all 0.3s ease;
-    position: relative;
-  }
-  .amount-btn:hover, .amount-btn.active {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: white;
-  }
-  .amount-btn .freq {
-    display: block;
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    opacity: 0.7;
-    margin-top: 2px;
-  }
-
-  .donate-impact {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 32px;
-    margin-top: 60px;
-    text-align: left;
-  }
-
-  .impact-item {
-    padding: 28px;
-    border-top: 2px solid var(--gold);
-  }
-  .impact-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2.4rem;
-    color: var(--gold);
-    display: block;
-    margin-bottom: 8px;
-  }
-  .impact-item h4 {
-    font-size: 0.85rem;
-    color: var(--bark);
-    margin-bottom: 6px;
-  }
-  .impact-item p {
-    font-size: 0.78rem;
-    color: var(--stone);
-    line-height: 1.6;
-  }
-
   /* LOGIN MODAL */
   .modal-overlay {
     position: fixed; inset: 0;
@@ -838,7 +731,7 @@
 
   /* FOOTER */
   footer {
-    background: var(--deep);
+    background: rgba(253, 250, 245, 0.92);
     padding: 80px 60px 40px;
     color: var(--stone);
   }
@@ -923,8 +816,6 @@
     .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
     .forum-posts { grid-template-columns: 1fr; }
     .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; }
-    .donate-impact { grid-template-columns: 1fr; }
-    .donate-amounts { gap: 10px; }
     .forum-header { flex-direction: column; align-items: flex-start; gap: 20px; }
   }
 </style>
@@ -938,13 +829,12 @@
 
 <!-- NAV -->
 <nav id="navbar">
-  <a href="#" class="logo">Grace <span>Community</span></a>
+  <a href="#" class="logo">Catechist's <span>Forum</span></a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
     <li><a href="forum.html">Forum</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#" class="btn-login" onclick="openModal(event)">Log In</a></li>
-    <li><a href="#donate" class="btn-donate">Donate</a></li>
   </ul>
   <button class="hamburger">☰</button>
 </nav>
@@ -999,7 +889,7 @@
     <div class="about-content">
       <div class="section-label">Our Story</div>
       <h2>Rooted in Faith,<br><em>Open to All</em></h2>
-      <p>Founded in 1974, Grace Community has been a beacon of hope and fellowship in the heart of our city. We believe in the transformative power of community — that together, we can do more than any of us could alone.</p>
+      <p>Founded in 1974, Catechist's Forum has been a beacon of hope and fellowship in the heart of our city. We believe in the transformative power of community — that together, we can do more than any of us could alone.</p>
       <p>Our doors are open to everyone. Whether you're searching for answers, deepening your faith, or simply looking for a place to belong, you'll find a home here among people who care.</p>
       <div class="about-values">
         <div class="value-item">
@@ -1031,61 +921,17 @@
         <div class="section-label">Discussion</div>
         <h2>Community <br>Forum</h2>
       </div>
-      <a href="#" class="btn-primary" style="height:fit-content">Start a Thread</a>
+      <a href="#" class="btn-primary" style="height:fit-content" onclick="startThread(event)">Start a Thread</a>
     </div>
-    <div class="forum-posts reveal">
-      <div class="forum-post">
-        <div class="post-category">Faith & Theology</div>
-        <div class="post-title">How do you maintain faith during difficult seasons of life?</div>
-        <div class="post-excerpt">I've been going through a really challenging time and wanted to share what's been helping me stay grounded. Would love to hear your experiences...</div>
-        <div class="post-meta">
-          <div class="post-avatar">MK</div>
-          <span>Mary K.</span>
-          <span>·</span>
-          <span>2 hours ago</span>
-          <div class="post-replies">💬 24 replies</div>
-        </div>
+    <div class="forum-posts reveal" id="forumPostsGrid">
+      <div class="forum-post" style="grid-column:1/-1;text-align:center;padding:48px;color:var(--stone);font-size:.85rem">
+        Loading latest discussions&hellip;
       </div>
-      <div class="forum-post">
-        <div class="post-category">Prayer Requests</div>
-        <div class="post-title">Please pray for my mother's recovery</div>
-        <div class="post-excerpt">My mother was admitted to the hospital yesterday. The doctors are optimistic but the family would appreciate all the prayers and support we can get...</div>
-        <div class="post-meta">
-          <div class="post-avatar">JR</div>
-          <span>James R.</span>
-          <span>·</span>
-          <span>5 hours ago</span>
-          <div class="post-replies">💬 41 replies</div>
-        </div>
-      </div>
-      <div class="forum-post">
-        <div class="post-category">Events & Gatherings</div>
-        <div class="post-title">Recap: Last Sunday's community breakfast was a blessing!</div>
-        <div class="post-excerpt">What an incredible morning we had together. Over 200 people came out to share a meal and fellowship. Here are some highlights and photos from the event...</div>
-        <div class="post-meta">
-          <div class="post-avatar">SP</div>
-          <span>Sarah P.</span>
-          <span>·</span>
-          <span>1 day ago</span>
-          <div class="post-replies">💬 18 replies</div>
-        </div>
-      </div>
-      <div class="forum-post">
-        <div class="post-category">Study & Learning</div>
-        <div class="post-title">New Bible study group forming — all welcome!</div>
-        <div class="post-excerpt">Starting next Thursday, we'll be exploring the Book of Psalms together. No prior knowledge needed, just a willing heart and an open mind. Who's in?</div>
-        <div class="post-meta">
-          <div class="post-avatar">DL</div>
-          <span>David L.</span>
-          <span>·</span>
-          <span>2 days ago</span>
-          <div class="post-replies">💬 33 replies</div>
-        </div>
-      </div>
+    </div>
     </div>
     <div class="forum-cta-bar reveal">
       <p>"Iron sharpens iron, and one person sharpens another." — Proverbs 27:17</p>
-      <a href="#" class="btn-primary" onclick="openModal(event)">Join the Conversation</a>
+      <a href="forum.html" class="btn-primary">Join the Conversation</a>
     </div>
   </div>
 </section>
@@ -1158,62 +1004,13 @@
   </div>
 </section>
 
-<!-- DONATE -->
-<section id="donate">
-  <div class="section-inner donate-inner">
-    <div class="section-label reveal">Support Our Mission</div>
-    <h2 class="reveal">Your Gift <em>Makes</em><br>a Difference</h2>
-    <p class="reveal">Every contribution, large or small, helps us serve our community, support those in need, and spread hope. Your generosity keeps our doors open.</p>
-    <div class="donate-amounts reveal">
-      <button class="amount-btn" onclick="setAmount(this)">
-        $25
-        <span class="freq">One-Time</span>
-      </button>
-      <button class="amount-btn active" onclick="setAmount(this)">
-        $50
-        <span class="freq">One-Time</span>
-      </button>
-      <button class="amount-btn" onclick="setAmount(this)">
-        $100
-        <span class="freq">One-Time</span>
-      </button>
-      <button class="amount-btn" onclick="setAmount(this)">
-        $25/mo
-        <span class="freq">Monthly</span>
-      </button>
-      <button class="amount-btn" onclick="setAmount(this)">
-        Custom
-        <span class="freq">Amount</span>
-      </button>
-    </div>
-    <a href="#" class="btn-primary reveal" style="display:inline-block; padding:18px 60px; font-size:0.8rem;">Donate Securely</a>
-
-    <div class="donate-impact reveal">
-      <div class="impact-item">
-        <span class="impact-num">1,200</span>
-        <h4>Meals Served Monthly</h4>
-        <p>Our food pantry serves families in our community every week without exception.</p>
-      </div>
-      <div class="impact-item">
-        <span class="impact-num">340+</span>
-        <h4>Youth Programs</h4>
-        <p>Young people engaged in mentorship, education, and spiritual formation each year.</p>
-      </div>
-      <div class="impact-item">
-        <span class="impact-num">48</span>
-        <h4>Mission Trips</h4>
-        <p>Countries we've served in over the past decade through our global outreach program.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
-        <a href="#" class="logo">Grace <span>Community</span></a>
+        <a href="#" class="logo">Catechist's <span>Forum</span></a>
         <p>A welcoming community of faith, hope, and love. All are welcome at our table.</p>
       </div>
       <div class="footer-col">
@@ -1222,8 +1019,7 @@
           <li><a href="#about">About Us</a></li>
           <li><a href="#forum">Forum</a></li>
           <li><a href="#contact">Contact</a></li>
-          <li><a href="#donate">Donate</a></li>
-        </ul>
+                  </ul>
       </div>
       <div class="footer-col">
         <h5>Ministries</h5>
@@ -1245,7 +1041,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Grace Community. All rights reserved.</span>
+      <span>© 2026 Catechist's Forum. All rights reserved.</span>
       <a href="admin.html" style="font-size:.65rem;color:rgba(140,123,104,.3);text-decoration:none;letter-spacing:.1em;transition:color .3s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='rgba(140,123,104,.3)'">Admin</a>
     </div>
   </div>
@@ -1309,6 +1105,91 @@ function openModal(e) { e.preventDefault(); document.getElementById('loginModal'
 function closeModal() { document.getElementById('loginModal').classList.remove('open'); }
 function closeModalOnOverlay(e) { if (e.target === e.currentTarget) closeModal(); }
 
+// Start a Thread — go to forum if logged in, else open login modal
+function startThread(e) {
+  e.preventDefault();
+  var session = sessionStorage.getItem('grace_session');
+  if(session) { window.location.href = 'forum.html'; }
+  else { openModal(e); }
+}
+
+// Load latest 4 threads from Supabase
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ago(iso){
+  var d=Date.now()-new Date(iso).getTime(), m=Math.floor(d/60000);
+  if(m<1)return'just now'; if(m<60)return m+'m ago';
+  var h=Math.floor(m/60); if(h<24)return h+'h ago';
+  var dy=Math.floor(h/24); if(dy<30)return dy+'d ago';
+  return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function initials(name){
+  return String(name||'??').split(' ').map(function(n){return n.charAt(0);}).join('').toUpperCase().slice(0,2);
+}
+var AVATAR_COLORS=['#b8963e','#3d6b4f','#6b4f3d','#4f6b8c','#8c4f6b'];
+function avatarColor(id){return AVATAR_COLORS[String(id||'x').charCodeAt(String(id||'x').length-1)%AVATAR_COLORS.length];}
+
+(async function loadForumPosts(){
+  var grid = document.getElementById('forumPostsGrid');
+  if(!grid) return;
+  if(!SUPABASE_URL || SUPABASE_URL==='YOUR_SUPABASE_URL'){
+    grid.innerHTML='<div class="forum-post" style="grid-column:1/-1;text-align:center;padding:48px;color:var(--stone);font-size:.85rem">Configure Supabase in config.js to show live discussions.</div>';
+    return;
+  }
+  try {
+    var sb2 = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Fetch latest 4 threads + their category names
+    var tres = await sb2.from('threads').select('id,title,body,author_name,author_id,replies,created_at,category_id').order('created_at',{ascending:false}).limit(4);
+    if(tres.error) throw new Error(tres.error.message);
+    var threads = tres.data || [];
+
+    if(!threads.length){
+      grid.innerHTML='<div class="forum-post" style="grid-column:1/-1;text-align:center;padding:48px;color:var(--stone);font-size:.85rem">No discussions yet — <a href="forum.html" style="color:var(--gold)">be the first to start one!</a></div>';
+      return;
+    }
+
+    // Fetch category names for these threads
+    var catIds = threads.map(function(t){return t.category_id;}).filter(Boolean);
+    var catMap = {};
+    if(catIds.length){
+      var cres = await sb2.from('categories').select('id,name').in('id',catIds);
+      (cres.data||[]).forEach(function(c){catMap[c.id]=c.name;});
+    }
+
+    grid.innerHTML = '';
+    threads.forEach(function(t){
+      var catName = catMap[t.category_id] || 'General';
+      var excerpt = (t.body||'').replace(/\n/g,' ').substring(0,120)+(t.body&&t.body.length>120?'...':'');
+      var div = document.createElement('div');
+      div.className = 'forum-post';
+      div.style.cursor = 'pointer';
+      div.onclick = function(){ window.location.href='forum.html'; };
+      div.innerHTML =
+        '<div class="post-category">'+esc(catName)+'</div>'+
+        '<div class="post-title">'+esc(t.title)+'</div>'+
+        '<div class="post-excerpt">'+esc(excerpt)+'</div>'+
+        '<div class="post-meta">'+
+          '<div class="post-avatar" style="background:'+avatarColor(t.author_id)+'">'+esc(initials(t.author_name))+'</div>'+
+          '<span>'+esc((t.author_name||'').split(' ')[0]+' '+(t.author_name||'').split(' ').slice(-1)[0].charAt(0)+'.')+'</span>'+
+          '<span>&middot;</span>'+
+          '<span>'+ago(t.created_at)+'</span>'+
+          '<div class="post-replies">&#x1F4AC; '+(t.replies||0)+' '+(t.replies===1?'reply':'replies')+'</div>'+
+        '</div>';
+      grid.appendChild(div);
+    });
+
+    // If fewer than 4 threads, pad with empty placeholder
+    for(var i=threads.length; i<4; i++){
+      var ph = document.createElement('div');
+      ph.className = 'forum-post';
+      ph.style.cssText = 'display:flex;align-items:center;justify-content:center;min-height:160px';
+      ph.innerHTML = '<a href="forum.html" style="font-size:.78rem;color:var(--gold);text-decoration:none;letter-spacing:.1em;text-transform:uppercase;opacity:.6">+ Start a discussion</a>';
+      grid.appendChild(ph);
+    }
+  } catch(e){
+    grid.innerHTML='<div class="forum-post" style="grid-column:1/-1;text-align:center;padding:48px;color:var(--stone);font-size:.82rem">Could not load discussions. <a href="forum.html" style="color:var(--gold)">Visit the forum directly.</a></div>';
+  }
+})();
+
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
 document.getElementById('modalPass').addEventListener('keydown', function(e){ if(e.key==='Enter') modalSignIn(); });
 
@@ -1344,10 +1225,7 @@ async function modalSignIn(){
     btn.disabled = false; btn.textContent = 'Sign In';
   }
 }
-function setAmount(btn) {
-  document.querySelectorAll('.amount-btn').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-}
+
 function handleFormSubmit(e) {
   e.preventDefault();
   var btn = e.target;

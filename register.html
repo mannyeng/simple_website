@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Register — Grace Community</title>
+<title>Register — Catechist's Forum</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,16 +58,17 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .cb-group input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);flex-shrink:0;margin-top:3px}
 .cb-group label{font-size:.78rem;color:var(--stone);line-height:1.5;font-weight:300}
 .cb-group a{color:var(--gold);text-decoration:none}
-.cat-picks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
-.cat-pick{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid rgba(61,46,30,.15);cursor:pointer;transition:all .2s;background:transparent}
-.cat-pick:hover{border-color:var(--gold);background:rgba(184,150,62,.04)}
-.cat-pick.selected{border-color:var(--gold);background:rgba(184,150,62,.08)}
-.cat-pick input[type=checkbox]{width:14px;height:14px;accent-color:var(--gold);flex-shrink:0;cursor:pointer}
-.cat-pick .cp-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.cat-pick .cp-name{font-size:.82rem;color:var(--bark);font-weight:400}
-.cat-pick .cp-desc{font-size:.68rem;color:var(--stone);margin-top:1px}
-.cat-loading{font-size:.78rem;color:var(--stone);padding:12px 0;font-style:italic}
-.cat-none{font-size:.78rem;color:var(--stone);padding:10px;background:rgba(184,150,62,.05);border-left:2px solid rgba(184,150,62,.2)}
+.cat-picks{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.cat-pick{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid rgba(61,46,30,.18);cursor:pointer;transition:all .2s;background:transparent;border-radius:2px;user-select:none}
+.cat-pick:hover{border-color:var(--gold);background:rgba(184,150,62,.05)}
+.cat-pick.selected{border-color:var(--gold);background:rgba(184,150,62,.1)}
+.cat-pick.selected .cp-name{color:var(--bark);font-weight:500}
+.cat-pick input[type=checkbox]{width:12px;height:12px;accent-color:var(--gold);flex-shrink:0;cursor:pointer}
+.cat-pick .cp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cat-pick .cp-name{font-size:.75rem;color:var(--stone);font-weight:400;white-space:nowrap}
+.cat-pick .cp-desc{display:none}
+.cat-loading{font-size:.75rem;color:var(--stone);padding:8px 0;font-style:italic}
+.cat-none{font-size:.75rem;color:var(--stone);padding:8px 12px;background:rgba(184,150,62,.05);border-left:2px solid rgba(184,150,62,.2)}
 .global-err{display:none;background:rgba(139,58,58,.1);border-left:2px solid var(--error);padding:12px 16px;margin-bottom:16px;font-size:.82rem;color:var(--error)}
 .global-err.show{display:block}
 .btn-submit{width:100%;padding:18px;background:var(--gold);color:white;border:none;font-family:'Jost',sans-serif;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:background .3s;margin-top:8px}
@@ -94,7 +95,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 <div class="page-bg"></div>
 <div class="page-pattern"></div>
 <nav>
-  <a href="index.html" class="logo">Grace <span>Community</span></a>
+  <a href="index.html" class="logo">Catechist's <span>Forum</span></a>
   <a href="index.html" class="nav-back">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     Back to Home
@@ -227,7 +228,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <h3>Welcome to the Family!</h3>
-        <p>Your account has been created. You are now part of Grace Community.</p>
+        <p>Your account has been created. You are now part of Catechist's Forum.</p>
         <div class="member-card" id="memberCard"></div>
         <a href="forum.html" class="btn-home">Go to Forum</a>
       </div>
