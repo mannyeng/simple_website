@@ -275,25 +275,32 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   var btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='Creating Account...';
 
-  // Check duplicate email
-  var chk = await sb.from('members').select('id').eq('email', email.toLowerCase()).maybeSingle();
-  if(chk.data){btn.disabled=false;btn.textContent='Create My Account';globalErr('An account with this email already exists.');return}
+  try {
+    // Check duplicate email
+    var chk = await sb.from('members').select('id').eq('email', email.toLowerCase()).maybeSingle();
+    if(chk.error) throw new Error(chk.error.message);
+    if(chk.data){btn.disabled=false;btn.textContent='Create My Account';globalErr('An account with this email already exists.');return}
 
-  var member = {
-    id: 'GC-'+Date.now(),
-    first_name: firstName, last_name: lastName,
-    email: email.toLowerCase(), password: hashPw(password),
-    dob: dob||null, phone: phone||null,
-    source: source||null, ministry: ministry||null,
-    newsletter: newsletter,
-    assigned_categories: [], followed_categories: [], followed_threads: [],
-    joined_at: new Date().toISOString()
-  };
+    var member = {
+      id: 'GC-'+Date.now(),
+      first_name: firstName, last_name: lastName,
+      email: email.toLowerCase(), password: hashPw(password),
+      dob: dob||null, phone: phone||null,
+      source: source||null, ministry: ministry||null,
+      newsletter: newsletter,
+      assigned_categories: [], followed_categories: [], followed_threads: [],
+      joined_at: new Date().toISOString()
+    };
 
-  var res = await sb.from('members').insert(member);
-  btn.disabled=false;btn.textContent='Create My Account';
+    var res = await sb.from('members').insert(member);
+    if(res.error) throw new Error(res.error.message);
+    btn.disabled=false;btn.textContent='Create My Account';
 
-  if(res.error){globalErr('Error creating account: '+res.error.message);return}
+  } catch(err) {
+    btn.disabled=false;btn.textContent='Create My Account';
+    globalErr('Connection error: '+err.message+'. Please check your config.js Supabase credentials.');
+    return;
+  }
 
   // Show success
   document.getElementById('formState').style.display='none';

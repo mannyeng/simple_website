@@ -210,7 +210,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
             <h1 id="forumTitle">All <em>Discussions</em></h1>
             <p id="forumDesc">Browse all community discussions</p>
           </div>
-          <button class="btn-new" id="btnNewThread" disabled title="You must be assigned to a category to post">+ New Thread</button>
+          <button class="btn-new" id="btnNewThread">+ New Thread</button>
         </div>
         <div class="thread-filters">
           <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
@@ -316,12 +316,26 @@ async function doLogin(){
   if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.classList.add('show');return}
   var btn=document.getElementById('btnGateLogin');
   btn.disabled=true;btn.textContent='Signing in...';
-  var res = await sb.from('members').select('*').eq('email',email.toLowerCase()).eq('password',hashPw(pass)).maybeSingle();
-  btn.disabled=false;btn.textContent='Sign In to Forum';
-  if(!res.data){errEl.textContent='Invalid email or password.';errEl.classList.add('show');return}
-  currentUser=res.data;
-  sessionStorage.setItem('grace_session',JSON.stringify({id:currentUser.id}));
-  showForum();
+  try {
+    var res = await sb.from('members')
+      .select('id,first_name,last_name,email,password,dob,phone,source,ministry,newsletter,assigned_categories,followed_categories,followed_threads,joined_at')
+      .eq('email',email.toLowerCase())
+      .maybeSingle();
+    if(res.error) throw new Error(res.error.message);
+    if(!res.data || res.data.password !== hashPw(pass)){
+      errEl.textContent='Invalid email or password. Please check and try again.';
+      errEl.classList.add('show');
+      btn.disabled=false;btn.textContent='Sign In to Forum';
+      return;
+    }
+    currentUser=res.data;
+    sessionStorage.setItem('grace_session',JSON.stringify({id:currentUser.id}));
+    showForum();
+  } catch(err) {
+    errEl.textContent='Connection error: '+err.message+'. Check your config.js Supabase credentials.';
+    errEl.classList.add('show');
+    btn.disabled=false;btn.textContent='Sign In to Forum';
+  }
 }
 
 document.getElementById('btnNavLogout').addEventListener('click',function(){
@@ -333,9 +347,13 @@ document.getElementById('btnNavLogout').addEventListener('click',function(){
 async function init(){
   var s=sessionStorage.getItem('grace_session');
   if(s){
-    var sid=JSON.parse(s).id;
-    var res=await sb.from('members').select('*').eq('id',sid).maybeSingle();
-    if(res.data){currentUser=res.data;showForum();return}
+    try{
+      var sid=JSON.parse(s).id;
+      var res=await sb.from('members').select('*').eq('id',sid).maybeSingle();
+      if(res.data && !res.error){currentUser=res.data;showForum();return}
+    }catch(e){
+      sessionStorage.removeItem('grace_session');
+    }
   }
   document.getElementById('loginGate').style.display='flex';
 }
@@ -410,11 +428,10 @@ async function toggleFollowCat(catId){
 }
 
 function updateNewBtn(){
-  var ac=currentUser.assigned_categories||[];
-  var canPost=ac.length>0&&(currentCat==='all'||currentCat==='following'||ac.includes(currentCat));
+  // Button is always enabled — category check happens inside the modal
   var btn=document.getElementById('btnNewThread');
-  btn.disabled=!canPost;
-  btn.title=canPost?'':'You need to be assigned to a category by admin to post';
+  btn.disabled=false;
+  btn.title='Start a new discussion thread';
 }
 
 /* ── THREAD LIST ── */
@@ -640,28 +657,59 @@ async function uploadFiles(pendingFiles,progressEl){
 
 /* ── NEW THREAD ── */
 document.getElementById('btnNewThread').addEventListener('click',async function(){
-  if(this.disabled) return;
   newPendingFiles=[];
   document.getElementById('newUploadList').innerHTML='';
   document.getElementById('newUploadErr').textContent='';
   document.getElementById('modalErr').classList.remove('show');
   document.getElementById('threadTitle').value='';
   document.getElementById('threadBody').value='';
+
+  // Always re-fetch fresh user data so admin assignments are current
+  var freshUser=await sb.from('members').select('*').eq('id',currentUser.id).maybeSingle();
+  if(freshUser.data) currentUser=freshUser.data;
+
   var cats=await sb.from('categories').select('*').order('name');
   var ac=currentUser.assigned_categories||[];
-  var allowed=(cats.data||[]).filter(function(c){return ac.includes(c.id)});
+  var allCats=cats.data||[];
+  var allowed=allCats.filter(function(c){return ac.includes(c.id)});
+
   var sel=document.getElementById('threadCat');
   sel.innerHTML='';
-  allowed.forEach(function(c){
-    var opt=document.createElement('option');opt.value=c.id;opt.textContent=c.name;
-    if(currentCat===c.id) opt.selected=true;
-    sel.appendChild(opt);
-  });
-  document.getElementById('modalSub').textContent='Posting in: '+allowed.map(function(c){return c.name}).join(', ');
+  var submitBtn=document.getElementById('btnSubmitThread');
+
+  if(!allCats.length){
+    // No categories exist at all
+    document.getElementById('modalErr').textContent='No categories have been created yet. Please ask an admin to create a category first.';
+    document.getElementById('modalErr').classList.add('show');
+    document.getElementById('modalSub').textContent='';
+    submitBtn.disabled=true;
+  } else if(!allowed.length){
+    // Categories exist but user not assigned to any
+    document.getElementById('modalErr').textContent='You have not been assigned to any categories yet. Please ask an admin to assign you to a category before posting.';
+    document.getElementById('modalErr').classList.add('show');
+    document.getElementById('modalSub').textContent='';
+    // Populate all cats as disabled so user can see what exists
+    allCats.forEach(function(c){
+      var opt=document.createElement('option');opt.value='';opt.textContent=c.name+' (not assigned)';opt.disabled=true;
+      sel.appendChild(opt);
+    });
+    submitBtn.disabled=true;
+  } else {
+    // User has assigned categories — populate and enable
+    document.getElementById('modalErr').classList.remove('show');
+    allowed.forEach(function(c){
+      var opt=document.createElement('option');opt.value=c.id;opt.textContent=c.name;
+      if(currentCat===c.id) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    document.getElementById('modalSub').textContent='You can post in: '+allowed.map(function(c){return c.name}).join(', ');
+    submitBtn.disabled=false;
+  }
+
   document.getElementById('newThreadModal').classList.add('open');
 });
 
-function closeModal(){document.getElementById('newThreadModal').classList.remove('open')}
+function closeModal(){document.getElementById('newThreadModal').classList.remove('open');document.getElementById('btnSubmitThread').disabled=false;}
 document.getElementById('newThreadModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
 
 document.getElementById('btnSubmitThread').addEventListener('click',async function(){
@@ -717,6 +765,22 @@ document.getElementById('btnPostReply').addEventListener('click',async function(
     inp.files=e.dataTransfer.files;handleFiles(inp,ctx);
   });
 });
+
+// Validate config before anything runs
+(function(){
+  if(!SUPABASE_URL || SUPABASE_URL==='YOUR_SUPABASE_URL' || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY==='YOUR_SUPABASE_ANON_KEY'){
+    var gate=document.getElementById('loginGate');
+    if(gate) gate.style.display='flex';
+    var errEl=document.getElementById('gateErr');
+    if(errEl){
+      errEl.textContent='⚠ config.js is not configured. Please set your SUPABASE_URL and SUPABASE_ANON_KEY.';
+      errEl.classList.add('show');
+    }
+    var btn=document.getElementById('btnGateLogin');
+    if(btn) btn.disabled=true;
+    return;
+  }
+})();
 
 init();
 </script>
