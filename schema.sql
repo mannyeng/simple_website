@@ -110,11 +110,17 @@ create table if not exists timeline_events (
   era text not null check (era in ('ancient','classical','medieval','early-modern','modern')),
   title text not null,
   description text not null,
-  author_id text references members(id) on delete cascade,
+  author_id text references members(id) on delete set null, -- nullable: NULL = admin import
   author_name text not null,
   approved boolean default false,
   created_at timestamptz default now()
 );
+
+-- If table already exists, run these to allow admin bulk imports:
+-- alter table timeline_events alter column author_id drop not null;
+-- alter table timeline_events drop constraint if exists timeline_events_author_id_fkey;
+-- alter table timeline_events add constraint timeline_events_author_id_fkey
+--   foreign key (author_id) references members(id) on delete set null;
 
 alter table timeline_events enable row level security;
 create policy "allow_all_timeline" on timeline_events for all using (true) with check (true);
