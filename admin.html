@@ -157,6 +157,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
       <button class="tab-btn active" onclick="switchTab('members',this)">Members</button>
       <button class="tab-btn" onclick="switchTab('categories',this)">Categories &amp; Assignments</button>
       <button class="tab-btn" onclick="switchTab('threads',this)">Forum Threads</button>
+      <button class="tab-btn" onclick="switchTab('timeline',this)">Timeline Approvals</button>
     </div>
 
     <!-- MEMBERS TAB -->
@@ -226,6 +227,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
     <!-- THREADS TAB -->
     <div id="threadsPanel">
       <div id="adminThreadList"><div class="loading-row"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- TIMELINE TAB -->
+    <div id="timelinePanel" style="display:none">
+      <div style="display:flex;gap:12px;margin-bottom:22px;border-bottom:1px solid rgba(184,150,62,.15);padding-bottom:18px">
+        <button class="btn-export" id="btnShowPending" onclick="showTimelineTab('pending',this)" style="border-color:var(--gold);color:var(--gold)">&#9679; Pending Approval</button>
+        <button class="btn-export" onclick="showTimelineTab('approved',this)">&#10003; Approved</button>
+        <a href="timeline.html" target="_blank" class="btn-export" style="text-decoration:none">&#8599; View Timeline</a>
+      </div>
+      <div id="timelineAdminList"><div class="loading-row"><div class="spinner"></div></div></div>
     </div>
   </div>
 </div>
@@ -319,10 +330,12 @@ function switchTab(tab,btn){
   document.getElementById('membersPanel').style.display='none';
   document.getElementById('catPanel').style.display='none';
   document.getElementById('threadsPanel').style.display='none';
+  document.getElementById('timelinePanel').style.display='none';
   document.getElementById('dashActions').style.display='none';
   if(tab==='members'){document.getElementById('membersPanel').style.display='block';document.getElementById('dashActions').style.display='flex'}
   else if(tab==='categories'){document.getElementById('catPanel').style.display='block';renderCatList();renderAssignments()}
   else if(tab==='threads'){document.getElementById('threadsPanel').style.display='block';renderAdminThreads()}
+  else if(tab==='timeline'){document.getElementById('timelinePanel').style.display='block';renderTimelineAdmin()}
 }
 
 /* ── STATS ── */
@@ -589,6 +602,70 @@ function toast(msg){
   t.textContent=msg;document.body.appendChild(t);
   setTimeout(function(){t.style.transform='translateY(0)';t.style.opacity='1'},10);
   setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},400)},2500);
+}
+
+/* ── TIMELINE ADMIN ── */
+var tlTabMode = 'pending';
+
+function showTimelineTab(mode, btn){
+  tlTabMode = mode;
+  document.querySelectorAll('#timelinePanel .btn-export').forEach(function(b){b.style.borderColor='';b.style.color='';});
+  if(btn){btn.style.borderColor='var(--gold)';btn.style.color='var(--gold)';}
+  renderTimelineAdmin();
+}
+
+async function renderTimelineAdmin(){
+  var el = document.getElementById('timelineAdminList');
+  el.innerHTML = '<div class="loading-row"><div class="spinner"></div></div>';
+  try{
+    var q = sb.from('timeline_events').select('*').order('created_at',{ascending:false});
+    if(tlTabMode==='pending') q = q.eq('approved',false);
+    else q = q.eq('approved',true);
+    var res = await q;
+    if(res.error) throw new Error(res.error.message);
+    var events = res.data||[];
+    if(!events.length){
+      el.innerHTML='<div class="empty-state">No '+(tlTabMode==='pending'?'pending':'approved')+' events.</div>';
+      return;
+    }
+    var ERA = {ancient:'Ancient','classical':'Classical',medieval:'Medieval','early-modern':'Early Modern',modern:'Modern'};
+    function fmtY(y){return y<0?Math.abs(y)+' BC':y+' AD';}
+    var html='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Year</th><th>Era</th><th>Title</th><th>Description</th><th>Submitted By</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+    html+=events.map(function(ev){
+      var d=new Date(ev.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var desc=(ev.description||'').substring(0,80)+(ev.description&&ev.description.length>80?'…':'');
+      return '<tr>'+
+        '<td style="color:var(--gold);font-weight:500;white-space:nowrap">'+fmtY(ev.year)+'</td>'+
+        '<td><span class="badge">'+(ERA[ev.era]||ev.era)+'</span></td>'+
+        '<td style="color:var(--cream);max-width:200px">'+ev.title.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</td>'+
+        '<td style="max-width:220px;font-size:.75rem">'+desc.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</td>'+
+        '<td>'+ev.author_name.replace(/&/g,'&amp;')+'</td>'+
+        '<td style="font-size:.7rem">'+d+'</td>'+
+        '<td style="display:flex;gap:5px;align-items:center">'+
+          (tlTabMode==='pending'?'<button onclick="approveEvent(''+ev.id+'')" style="background:none;border:1px solid rgba(61,107,79,.4);color:#6b9e75;padding:3px 10px;font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">&#10003; Approve</button>':'<span style="font-size:.62rem;color:#6b9e75">&#10003; Live</span>')+
+          '<button class="btn-del" onclick="deleteEvent(''+ev.id+'')">&#x2715;</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+    html+='</tbody></table></div>';
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML='<div class="empty-state" style="color:#c47070">Error: '+e.message+'</div>';
+  }
+}
+
+async function approveEvent(id){
+  var res = await sb.from('timeline_events').update({approved:true}).eq('id',id);
+  if(res.error){toast('Error: '+res.error.message);return;}
+  toast('Event approved and live on timeline!');
+  renderTimelineAdmin();
+}
+
+async function deleteEvent(id){
+  if(!confirm('Delete this timeline event permanently?')) return;
+  await sb.from('timeline_events').delete().eq('id',id);
+  toast('Event deleted.');
+  renderTimelineAdmin();
 }
 
 /* ── INIT ── */

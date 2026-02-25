@@ -99,3 +99,22 @@ create policy "allow_read_forum_files" on storage.objects
 
 create policy "allow_delete_forum_files" on storage.objects
   for delete using (bucket_id = 'forum-files');
+
+-- =============================================
+-- TIMELINE EVENTS
+-- =============================================
+
+create table if not exists timeline_events (
+  id text primary key,
+  year integer not null,
+  era text not null check (era in ('ancient','classical','medieval','early-modern','modern')),
+  title text not null,
+  description text not null,
+  author_id text references members(id) on delete cascade,
+  author_name text not null,
+  approved boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table timeline_events enable row level security;
+create policy "allow_all_timeline" on timeline_events for all using (true) with check (true);
