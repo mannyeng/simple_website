@@ -689,16 +689,20 @@
 
   .modal-close {
     position: absolute;
-    top: 24px; right: 24px;
-    background: none;
-    border: none;
-    cursor: none;
-    color: var(--stone);
-    font-size: 1.4rem;
+    top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(61,46,30,.08);
+    border: 1px solid rgba(61,46,30,.15);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--bark);
+    font-size: 1rem;
     line-height: 1;
-    transition: color 0.2s;
+    transition: all 0.2s;
+    z-index: 10;
   }
-  .modal-close:hover { color: var(--deep); }
+  .modal-close:hover { background: rgba(61,46,30,.15); color: var(--deep); border-color: rgba(61,46,30,.3); }
 
   .modal h3 {
     font-family: 'Cormorant Garamond', serif;
@@ -832,7 +836,7 @@
   <a href="#" class="logo">Catechist's <span>Forum</span></a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
-    <li><a href="forum.html">Forum</a></li>
+    <li><a href="forum.html" onclick="handleForumClick(event)">Forum</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#" class="btn-login" onclick="openModal(event)">Log In</a></li>
   </ul>
@@ -1049,7 +1053,8 @@
 <!-- LOGIN MODAL -->
 <div class="modal-overlay" id="loginModal" onclick="closeModalOnOverlay(event)">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    <!-- X close button - large, obvious, top-right of modal -->
+    <button onclick="closeModal()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;background:#f0ebe3;border:none;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3d2e1e;line-height:1;z-index:10" title="Close">&times;</button>
     <h3>Welcome Back</h3>
     <p class="modal-sub">Sign in to access the community forum and member resources.</p>
     <div id="loginModalErr" style="display:none;font-size:.78rem;color:#8b3a3a;background:rgba(139,58,58,.08);border-left:2px solid #8b3a3a;padding:10px 14px;margin-bottom:14px"></div>
@@ -1065,6 +1070,7 @@
     <div class="modal-footer" style="margin-top:20px">
       Don't have an account? <a href="register.html">Register here</a>
     </div>
+    <div style="text-align:center;margin-top:14px;font-size:.68rem;color:var(--muted)">Press <kbd style="background:#e8e2d8;padding:1px 6px;border-radius:3px;font-family:monospace;font-size:.7rem">Esc</kbd> or click outside to close</div>
   </div>
 </div>
 
@@ -1101,6 +1107,12 @@ var _observer = new IntersectionObserver(function(entries) {
 _reveals.forEach(function(r) { _observer.observe(r); });
 
 function openModal(e) { e.preventDefault(); document.getElementById('loginModal').classList.add('open'); document.getElementById('modalEmail').focus(); }
+function handleForumClick(e) {
+  var session = sessionStorage.getItem('grace_session');
+  if(session) { return; } // already logged in, let href go to forum.html normally
+  e.preventDefault();
+  openModal(e);
+}
 function closeModal() { document.getElementById('loginModal').classList.remove('open'); }
 function closeModalOnOverlay(e) { if (e.target === e.currentTarget) closeModal(); }
 
@@ -1189,7 +1201,7 @@ function avatarColor(id){return AVATAR_COLORS[String(id||'x').charCodeAt(String(
   }
 })();
 
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(); } });
 document.getElementById('modalPass').addEventListener('keydown', function(e){ if(e.key==='Enter') modalSignIn(); });
 
 function hashPw(s){var h=0,i;for(i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h=h&h}return'h_'+Math.abs(h).toString(16)}

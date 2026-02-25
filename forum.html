@@ -21,7 +21,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .btn-nav.solid{background:var(--gold);color:white}
 
 /* LOGIN GATE */
-#loginGate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 20px;background:var(--deep)}
+#loginGate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 20px;background:var(--deep);position:relative}
 .gate-box{background:var(--warm-white);max-width:420px;width:100%;padding:56px;position:relative}
 .gate-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold))}
 .gate-box h2{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--bark);margin-bottom:6px;text-align:center}
@@ -172,6 +172,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 
 <!-- LOGIN GATE -->
 <div id="loginGate">
+  <a href="index.html" style="position:absolute;top:24px;left:32px;display:flex;align-items:center;gap:7px;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Home
+  </a>
   <div class="gate-box">
     <h2>Forum Access</h2>
     <p>Sign in with your Catechist's Forum account to join discussions.</p>
