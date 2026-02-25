@@ -139,7 +139,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
     <div class="fg"><label>Username</label><input type="text" id="adminUser" placeholder="admin" autocomplete="off"></div>
     <div class="fg"><label>Password</label><input type="password" id="adminPass" placeholder="••••••••"></div>
     <button class="btn-submit" id="btnAdminLogin">Access Dashboard</button>
-    <div class="login-hint">Default — <strong>Username:</strong> admin &nbsp;|&nbsp; <strong>Password:</strong> admin123</div>
+    <div class="login-hint" id="loginHint">Loading credentials from config.js&hellip;</div>
   </div>
 </div>
 
@@ -247,7 +247,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 </div>
 
 <script>
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var sb;
+try{ sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+catch(e){ console.warn('Supabase init failed:',e.message); }
 var SESSION_MINS = 30;
 var sessionInterval = null;
 var allMembers = [];
@@ -279,6 +281,16 @@ document.addEventListener('click',extendSession);document.addEventListener('keyd
 document.getElementById('btnLogout').addEventListener('click',logout);
 
 /* ── LOGIN ── */
+// Show current credentials from config.js
+(function(){
+  try{
+    var h=document.getElementById('loginHint');
+    var u=(typeof ADMIN_USERNAME!=='undefined')?ADMIN_USERNAME:'admin';
+    var p=(typeof ADMIN_PASSWORD!=='undefined')?ADMIN_PASSWORD:'admin123';
+    h.innerHTML='Username: <strong>'+u+'</strong> &nbsp;&middot;&nbsp; Password: <strong>'+p+'</strong> &mdash; change in <strong>config.js</strong>';
+  }catch(e){}
+})();
+
 document.getElementById('btnAdminLogin').addEventListener('click',doAdminLogin);
 document.getElementById('adminPass').addEventListener('keydown',function(e){if(e.key==='Enter')doAdminLogin()});
 document.getElementById('adminUser').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('adminPass').focus()});
@@ -291,16 +303,31 @@ function doAdminLogin(){
   if(!user||!pass){errEl.textContent='Please enter username and password.';errEl.classList.add('show');return}
   var btn=document.getElementById('btnAdminLogin');
   btn.disabled=true;btn.textContent='Verifying...';
-  setTimeout(function(){
-    if(user===ADMIN_USERNAME&&pass===ADMIN_PASSWORD){
-      createSession();btn.disabled=false;btn.textContent='Access Dashboard';
-      showDashboard();
-    } else {
-      errEl.textContent='Invalid username or password.';errEl.classList.add('show');
-      btn.disabled=false;btn.textContent='Access Dashboard';
-      document.getElementById('adminPass').value='';
-    }
-  },500);
+  try{
+    setTimeout(function(){
+      try{
+        var expectedUser = (typeof ADMIN_USERNAME !== 'undefined') ? ADMIN_USERNAME : 'admin';
+        var expectedPass = (typeof ADMIN_PASSWORD !== 'undefined') ? ADMIN_PASSWORD : 'admin123';
+        if(user===expectedUser && pass===expectedPass){
+          createSession();btn.disabled=false;btn.textContent='Access Dashboard';
+          showDashboard();
+        } else {
+          errEl.textContent='Invalid username or password. Check config.js for ADMIN_USERNAME and ADMIN_PASSWORD.';
+          errEl.classList.add('show');
+          btn.disabled=false;btn.textContent='Access Dashboard';
+          document.getElementById('adminPass').value='';
+        }
+      }catch(e){
+        errEl.textContent='Login error: '+e.message;
+        errEl.classList.add('show');
+        btn.disabled=false;btn.textContent='Access Dashboard';
+      }
+    },400);
+  }catch(e){
+    errEl.textContent='Error: '+e.message;
+    errEl.classList.add('show');
+    btn.disabled=false;btn.textContent='Access Dashboard';
+  }
 }
 
 /* ── DASHBOARD ── */
@@ -628,27 +655,54 @@ async function renderTimelineAdmin(){
       el.innerHTML='<div class="empty-state">No '+(tlTabMode==='pending'?'pending':'approved')+' events.</div>';
       return;
     }
-    var ERA = {ancient:'Ancient','classical':'Classical',medieval:'Medieval','early-modern':'Early Modern',modern:'Modern'};
+    var ERA = {ancient:'Ancient',classical:'Classical',medieval:'Medieval','early-modern':'Early Modern',modern:'Modern'};
     function fmtY(y){return y<0?Math.abs(y)+' BC':y+' AD';}
-    var html='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Year</th><th>Era</th><th>Title</th><th>Description</th><th>Submitted By</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
-    html+=events.map(function(ev){
-      var d=new Date(ev.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-      var desc=(ev.description||'').substring(0,80)+(ev.description&&ev.description.length>80?'…':'');
-      return '<tr>'+
-        '<td style="color:var(--gold);font-weight:500;white-space:nowrap">'+fmtY(ev.year)+'</td>'+
-        '<td><span class="badge">'+(ERA[ev.era]||ev.era)+'</span></td>'+
-        '<td style="color:var(--cream);max-width:200px">'+ev.title.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</td>'+
-        '<td style="max-width:220px;font-size:.75rem">'+desc.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</td>'+
-        '<td>'+ev.author_name.replace(/&/g,'&amp;')+'</td>'+
-        '<td style="font-size:.7rem">'+d+'</td>'+
-        '<td style="display:flex;gap:5px;align-items:center">'+
-          (tlTabMode==='pending'?'<button onclick="approveEvent(''+ev.id+'')" style="background:none;border:1px solid rgba(61,107,79,.4);color:#6b9e75;padding:3px 10px;font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">&#10003; Approve</button>':'<span style="font-size:.62rem;color:#6b9e75">&#10003; Live</span>')+
-          '<button class="btn-del" onclick="deleteEvent(''+ev.id+'')">&#x2715;</button>'+
-        '</td>'+
-      '</tr>';
-    }).join('');
-    html+='</tbody></table></div>';
-    el.innerHTML=html;
+
+    var wrap = document.createElement('div'); wrap.className='tbl-wrap';
+    var table = document.createElement('table'); table.className='tbl';
+    table.innerHTML='<thead><tr><th>Year</th><th>Era</th><th>Title</th><th>Description</th><th>Submitted By</th><th>Date</th><th>Actions</th></tr></thead>';
+    var tbody = document.createElement('tbody');
+
+    events.forEach(function(ev){
+      var d = new Date(ev.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var desc = (ev.description||'').substring(0,80) + (ev.description&&ev.description.length>80?'…':'');
+      var tr = document.createElement('tr');
+
+      // Year
+      var tdY=document.createElement('td'); tdY.style.cssText='color:var(--gold);font-weight:500;white-space:nowrap'; tdY.textContent=fmtY(ev.year); tr.appendChild(tdY);
+      // Era
+      var tdE=document.createElement('td'); tdE.innerHTML='<span class="badge">'+(ERA[ev.era]||ev.era)+'</span>'; tr.appendChild(tdE);
+      // Title
+      var tdT=document.createElement('td'); tdT.style.cssText='color:var(--cream);max-width:200px'; tdT.textContent=ev.title; tr.appendChild(tdT);
+      // Desc
+      var tdD=document.createElement('td'); tdD.style.cssText='max-width:220px;font-size:.75rem'; tdD.textContent=desc; tr.appendChild(tdD);
+      // Author
+      var tdA=document.createElement('td'); tdA.textContent=ev.author_name; tr.appendChild(tdA);
+      // Date
+      var tdDt=document.createElement('td'); tdDt.style.fontSize='.7rem'; tdDt.textContent=d; tr.appendChild(tdDt);
+      // Actions
+      var tdAc=document.createElement('td'); tdAc.style.cssText='display:flex;gap:5px;align-items:center';
+      if(tlTabMode==='pending'){
+        var appBtn=document.createElement('button');
+        appBtn.textContent='✓ Approve';
+        appBtn.style.cssText='background:none;border:1px solid rgba(61,107,79,.4);color:#6b9e75;padding:3px 10px;font-family:"Jost",sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer';
+        appBtn.addEventListener('click',function(){approveEvent(ev.id);});
+        tdAc.appendChild(appBtn);
+      } else {
+        var live=document.createElement('span'); live.style.cssText='font-size:.62rem;color:#6b9e75'; live.textContent='✓ Live'; tdAc.appendChild(live);
+      }
+      var delBtn=document.createElement('button'); delBtn.className='btn-del'; delBtn.textContent='✕';
+      delBtn.addEventListener('click',function(){deleteEvent(ev.id);});
+      tdAc.appendChild(delBtn);
+      tr.appendChild(tdAc);
+
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    el.innerHTML='';
+    el.appendChild(wrap);
   }catch(e){
     el.innerHTML='<div class="empty-state" style="color:#c47070">Error: '+e.message+'</div>';
   }
