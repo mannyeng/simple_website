@@ -78,8 +78,38 @@
     color: var(--bark);
     letter-spacing: 0.02em;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .logo span { color: var(--gold); }
+  .logo-img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+  }
+  /* Placeholder shown when logo image is not yet set */
+  .logo-placeholder {
+    width: 38px;
+    height: 38px;
+    background: rgba(184,150,62,.15);
+    border: 1.5px dashed var(--gold);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: .5rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.3;
+  }
 
   .nav-links {
     display: flex;
@@ -825,6 +855,8 @@
 </style>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- EmailJS SDK — sends contact form to manuel.joseph@gmail.com -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -833,7 +865,10 @@
 
 <!-- NAV -->
 <nav id="navbar">
-  <a href="#" class="logo">Catechist's <span>Forum</span></a>
+  <a href="#" class="logo">
+    <img src="logo.png" class="logo-img" alt="Catechist's Forum Logo">
+    Catechist's <span>Forum</span>
+  </a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
     <li><a href="forum.html" onclick="handleForumClick(event)">Forum</a></li>
@@ -980,29 +1015,33 @@
         </ul>
       </div>
       <div class="contact-form">
+        <div id="contactSuccess" style="display:none;background:rgba(61,107,79,.1);border-left:3px solid #3d6b4f;padding:14px 18px;margin-bottom:18px;font-size:.85rem;color:#3d6b4f;font-family:'Jost',sans-serif">
+          &#10003; &nbsp;Your message has been sent! We'll get back to you within 24 hours.
+        </div>
+        <div id="contactError" style="display:none;background:rgba(139,58,58,.08);border-left:3px solid #8b3a3a;padding:14px 18px;margin-bottom:18px;font-size:.85rem;color:#8b3a3a;font-family:'Jost',sans-serif"></div>
         <div class="form-row">
           <div class="form-group">
             <label>First Name</label>
-            <input type="text" placeholder="John">
+            <input type="text" id="cfFirstName" placeholder="John">
           </div>
           <div class="form-group">
             <label>Last Name</label>
-            <input type="text" placeholder="Smith">
+            <input type="text" id="cfLastName" placeholder="Smith">
           </div>
         </div>
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" placeholder="john@example.com">
+          <input type="email" id="cfEmail" placeholder="john@example.com">
         </div>
         <div class="form-group">
           <label>Subject</label>
-          <input type="text" placeholder="How can we help?">
+          <input type="text" id="cfSubject" placeholder="How can we help?">
         </div>
         <div class="form-group">
           <label>Message</label>
-          <textarea placeholder="Tell us more..."></textarea>
+          <textarea id="cfMessage" placeholder="Tell us more..."></textarea>
         </div>
-        <button class="btn-primary" style="width:100%; padding:18px; font-size:0.75rem; letter-spacing:0.18em; border:none; cursor:pointer;" onclick="handleFormSubmit(event)">Send Message</button>
+        <button class="btn-primary" id="cfSubmitBtn" style="width:100%; padding:18px; font-size:0.75rem; letter-spacing:0.18em; border:none; cursor:pointer;" onclick="handleFormSubmit(event)">Send Message</button>
       </div>
     </div>
   </div>
@@ -1014,7 +1053,11 @@
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
-        <a href="#" class="logo">Catechist's <span>Forum</span></a>
+        <a href="#" class="logo">
+          <!-- LOGO IMAGE: replace with <img src="your-logo.png" class="logo-img" alt="Logo"> -->
+          <div class="logo-placeholder" style="width:28px;height:28px;font-size:.4rem">YOUR<br>LOGO</div>
+          Catechist's <span>Forum</span>
+        </a>
         <p>A welcoming community of faith, hope, and love. All are welcome at our table.</p>
       </div>
       <div class="footer-col">
@@ -1237,12 +1280,84 @@ async function modalSignIn(){
   }
 }
 
+/* ── EMAILJS CONFIG ──────────────────────────────────────────
+   To activate email sending:
+   1. Sign up free at https://www.emailjs.com
+   2. Create a service (Gmail) and connect manuel.joseph@gmail.com
+   3. Create an email template — use these variables in the template:
+        {{from_name}}   — sender's full name
+        {{from_email}}  — sender's email address
+        {{subject}}     — message subject
+        {{message}}     — message body
+        {{to_email}}    — always "manuel.joseph@gmail.com"
+   4. Replace the three placeholder values below with your real IDs
+─────────────────────────────────────────────────────────── */
+var EMAILJS_PUBLIC_KEY   = 'YOUR_PUBLIC_KEY';   // Account → API Keys
+var EMAILJS_SERVICE_ID   = 'YOUR_SERVICE_ID';   // Email Services → Service ID
+var EMAILJS_TEMPLATE_ID  = 'YOUR_TEMPLATE_ID';  // Email Templates → Template ID
+
 function handleFormSubmit(e) {
   e.preventDefault();
-  var btn = e.target;
-  btn.textContent = 'Message Sent!';
-  btn.style.background = '#3d6b4f';
-  setTimeout(function() { btn.textContent = 'Send Message'; btn.style.background = ''; }, 3000);
+  var firstName = document.getElementById('cfFirstName').value.trim();
+  var lastName  = document.getElementById('cfLastName').value.trim();
+  var email     = document.getElementById('cfEmail').value.trim();
+  var subject   = document.getElementById('cfSubject').value.trim();
+  var message   = document.getElementById('cfMessage').value.trim();
+  var btn       = document.getElementById('cfSubmitBtn');
+  var successEl = document.getElementById('contactSuccess');
+  var errorEl   = document.getElementById('contactError');
+
+  successEl.style.display = 'none';
+  errorEl.style.display   = 'none';
+
+  // Basic validation
+  if(!firstName || !email || !message) {
+    errorEl.textContent = 'Please fill in your name, email, and message.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailRe.test(email)) {
+    errorEl.textContent = 'Please enter a valid email address.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  // Check EmailJS is configured
+  if(EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+    // Fallback: open default mail client if EmailJS not configured yet
+    var body = encodeURIComponent('Name: ' + firstName + ' ' + lastName + '\nEmail: ' + email + '\n\n' + message);
+    window.location.href = 'mailto:manuel.joseph@gmail.com?subject=' + encodeURIComponent(subject || 'Message from Catechist Forum') + '&body=' + body;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    from_name:  firstName + ' ' + lastName,
+    from_email: email,
+    subject:    subject || '(no subject)',
+    message:    message,
+    to_email:   'manuel.joseph@gmail.com'
+  }).then(function() {
+    successEl.style.display = 'block';
+    btn.textContent = 'Send Message';
+    btn.disabled = false;
+    // Clear form
+    document.getElementById('cfFirstName').value = '';
+    document.getElementById('cfLastName').value  = '';
+    document.getElementById('cfEmail').value     = '';
+    document.getElementById('cfSubject').value   = '';
+    document.getElementById('cfMessage').value   = '';
+    successEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, function(err) {
+    errorEl.textContent = 'Failed to send: ' + (err.text || JSON.stringify(err)) + '. Please email us directly at manuel.joseph@gmail.com';
+    errorEl.style.display = 'block';
+    btn.textContent = 'Send Message';
+    btn.disabled = false;
+  });
 }
 
 document.querySelectorAll('a[href^="#"]').forEach(function(a) {
