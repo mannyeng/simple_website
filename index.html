@@ -84,16 +84,16 @@
   }
   .logo span { color: var(--gold); }
   .logo-img {
-    width: 38px;
-    height: 38px;
+    width: 50px;
+    height: 50px;
     object-fit: contain;
     display: block;
     flex-shrink: 0;
   }
   /* Placeholder shown when logo image is not yet set */
   .logo-placeholder {
-    width: 38px;
-    height: 38px;
+    width: 50px;
+    height: 50px;
     background: rgba(184,150,62,.15);
     border: 1.5px dashed var(--gold);
     border-radius: 6px;
@@ -866,15 +866,18 @@
 <!-- NAV -->
 <nav id="navbar">
   <a href="#" class="logo">
-    <!-- LOGO IMAGE: replace logo-placeholder div with: <img src="your-logo.png" class="logo-img" alt="Logo"> -->
-    <div class="logo-placeholder">YOUR<br>LOGO</div>
+    <img src="logo.png" class="logo-img" alt="Catechist's Forum Logo">
     Catechist's <span>Forum</span>
   </a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
     <li><a href="forum.html" onclick="handleForumClick(event)">Forum</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#" class="btn-login" onclick="openModal(event)">Log In</a></li>
+    <li id="navLoggedOut"><a href="#" class="btn-login" onclick="openModal(event)">Log In</a></li>
+    <li id="navLoggedIn" style="display:none;align-items:center;gap:12px">
+      <a href="forum.html" style="font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);text-decoration:none" id="navUserName"></a>
+      <a href="#" onclick="indexLogout(event)" style="font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--stone)'">Sign Out</a>
+    </li>
   </ul>
   <button class="hamburger">☰</button>
 </nav>
@@ -922,8 +925,8 @@
         </svg>
       </div>
       <div class="about-number">
-        <span class="num">2,400+</span>
-        <span class="label">Members & Growing</span>
+        <span class="num">2,200+</span>
+        <span class="label">Catechists & Growing</span>
       </div>
     </div>
     <div class="about-content">
@@ -1078,8 +1081,7 @@
     <div class="footer-top">
       <div class="footer-brand">
         <a href="#" class="logo">
-          <!-- LOGO IMAGE: replace with <img src="your-logo.png" class="logo-img" alt="Logo"> -->
-          <div class="logo-placeholder" style="width:28px;height:28px;font-size:.4rem">YOUR<br>LOGO</div>
+          <img src="logo.png" class="logo-img" alt="Catechist's Forum Logo">
           Catechist's <span>Forum</span>
         </a>
         <p>A welcoming community of faith, hope, and love. All are welcome at our table.</p>
@@ -1093,11 +1095,10 @@
                   </ul>
       </div>
       <div class="footer-col">
-        <h5>Ministries</h5>
+        <h5>Programs</h5>
         <ul>
           <li><a href="#">Didache-Theology Program</a></li>
           <li><a href="#">Conferences</a></li>
-          <li><a href="#">Men's Fellowship</a></li>
           <li><a href="#">Outreach</a></li>
         </ul>
       </div>
@@ -1174,6 +1175,28 @@ var _observer = new IntersectionObserver(function(entries) {
 _reveals.forEach(function(r) { _observer.observe(r); });
 
 function openModal(e) { e.preventDefault(); document.getElementById('loginModal').classList.add('open'); document.getElementById('modalEmail').focus(); }
+
+function indexLogout(e){
+  e.preventDefault();
+  sessionStorage.removeItem('grace_session');
+  document.getElementById('navLoggedIn').style.display = 'none';
+  document.getElementById('navLoggedOut').style.display = 'list-item';
+}
+
+function checkIndexSession(){
+  try{
+    var s = sessionStorage.getItem('grace_session');
+    if(!s) return;
+    var session = JSON.parse(s);
+    if(!session || !session.id) return;
+    var name = (session.first_name||'') + (session.last_name ? ' '+session.last_name : '');
+    if(!name.trim()) name = 'My Account';
+    document.getElementById('navUserName').textContent = name.trim();
+    document.getElementById('navLoggedIn').style.display = 'flex';
+    document.getElementById('navLoggedOut').style.display = 'none';
+  }catch(e){}
+}
+checkIndexSession();
 function handleForumClick(e) {
   var session = sessionStorage.getItem('grace_session');
   if(session) { return; } // already logged in, let href go to forum.html normally
@@ -1352,7 +1375,7 @@ async function modalSignIn(){
       return;
     }
     // Save session and redirect to forum
-    sessionStorage.setItem('grace_session', JSON.stringify({id: res.data.id}));
+    sessionStorage.setItem('grace_session', JSON.stringify({id: res.data.id, first_name: res.data.first_name, last_name: res.data.last_name}));
     window.location.href = 'forum.html';
   } catch(err) {
     errEl.textContent = 'Error: ' + err.message;
