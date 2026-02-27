@@ -124,3 +124,52 @@ create table if not exists timeline_events (
 
 alter table timeline_events enable row level security;
 create policy "allow_all_timeline" on timeline_events for all using (true) with check (true);
+
+-- =============================================
+-- ARTICLES
+-- =============================================
+
+create table if not exists articles (
+  id text primary key,
+  title text not null,
+  slug text unique not null,
+  excerpt text not null,
+  body text not null,
+  image_url text,
+  author_name text not null default 'Admin',
+  published boolean default true,
+  likes integer default 0,
+  created_at timestamptz default now()
+);
+
+alter table articles enable row level security;
+create policy "allow_all_articles" on articles for all using (true) with check (true);
+
+create table if not exists article_comments (
+  id text primary key,
+  article_id text references articles(id) on delete cascade,
+  member_id text references members(id) on delete cascade,
+  member_name text not null,
+  body text not null,
+  created_at timestamptz default now()
+);
+
+alter table article_comments enable row level security;
+create policy "allow_all_article_comments" on article_comments for all using (true) with check (true);
+
+create table if not exists article_likes (
+  id text primary key,
+  article_id text references articles(id) on delete cascade,
+  fingerprint text not null,
+  created_at timestamptz default now(),
+  unique(article_id, fingerprint)
+);
+
+alter table article_likes enable row level security;
+create policy "allow_all_article_likes" on article_likes for all using (true) with check (true);
+
+-- Storage bucket for article images (run in Supabase dashboard):
+-- insert into storage.buckets (id, name, public) values ('article-images', 'article-images', true);
+-- create policy "allow_article_image_upload" on storage.objects for insert with check (bucket_id = 'article-images');
+-- create policy "allow_article_image_read" on storage.objects for select using (bucket_id = 'article-images');
+-- create policy "allow_article_image_delete" on storage.objects for delete using (bucket_id = 'article-images');
