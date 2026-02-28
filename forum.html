@@ -156,7 +156,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 @media(max-width:900px){nav{padding:16px 20px}.forum-layout{grid-template-columns:1fr}.sidebar{display:none}.forum-main{padding:20px 16px}.modal-box{padding:28px 20px}}
 </style>
 </head>
-<body>
+<body style="visibility:hidden">
 <nav>
   <a href="index.html" class="logo">Catechist's <span>Forum</span></a>
   <div class="nav-right">
@@ -171,7 +171,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 </nav>
 
 <!-- LOGIN GATE -->
-<div id="loginGate">
+<div id="loginGate" style="display:none">
   <a href="index.html" style="position:absolute;top:24px;left:32px;display:flex;align-items:center;gap:7px;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     Back to Home
@@ -349,20 +349,47 @@ document.getElementById('btnNavLogout').addEventListener('click',function(){
 
 /* ── INIT ── */
 async function init(){
-  var s=sessionStorage.getItem('grace_session');
+  var s = sessionStorage.getItem('grace_session');
   if(s){
     try{
-      var sid=JSON.parse(s).id;
-      var res=await sb.from('members').select('*').eq('id',sid).maybeSingle();
-      if(res.data && !res.error){currentUser=res.data;showForum();return}
+      var parsed = JSON.parse(s);
+      if(parsed && parsed.id){
+        // Show forum shell instantly — no flicker
+        document.getElementById('loginGate').style.display = 'none';
+        document.getElementById('forumApp').style.display = 'block';
+        document.getElementById('btnNavLogout').style.display = 'block';
+        document.getElementById('btnNavRegister').style.display = 'none';
+        document.body.style.visibility = 'visible';
+        // Validate session with DB in background
+        try{
+          var res = await sb.from('members').select('*').eq('id', parsed.id).maybeSingle();
+          if(res.data && !res.error){
+            currentUser = res.data;
+            showForum();
+          } else {
+            // Invalid session — show gate
+            sessionStorage.removeItem('grace_session');
+            document.getElementById('forumApp').style.display = 'none';
+            document.getElementById('loginGate').style.display = 'flex';
+          }
+        }catch(e){
+          // Network error — still let them in, will fail gracefully on data load
+          currentUser = {id: parsed.id, first_name: parsed.first_name||'Member', last_name: parsed.last_name||''};
+          showForum();
+        }
+        return;
+      }
     }catch(e){
       sessionStorage.removeItem('grace_session');
     }
   }
-  document.getElementById('loginGate').style.display='flex';
+  // No session — show login gate
+  document.body.style.visibility = 'visible';
+  document.getElementById('loginGate').style.display = 'flex';
 }
 
 async function showForum(){
+  document.body.style.visibility = 'visible';
   document.getElementById('loginGate').style.display='none';
   document.getElementById('forumApp').style.display='block';
   document.getElementById('btnNavLogout').style.display='block';
