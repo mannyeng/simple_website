@@ -1263,7 +1263,11 @@ function avatarColor(id){return AVATAR_COLORS[String(id||'x').charCodeAt(String(
       var div = document.createElement('div');
       div.className = 'forum-post';
       div.style.cursor = 'pointer';
-      div.onclick = function(){ window.location.href='forum.html'; };
+      div.onclick = function(){
+        var session = sessionStorage.getItem('grace_session');
+        if(session){ window.location.href='forum.html'; }
+        else{ openModal({preventDefault:function(){}}); }
+      };
       div.innerHTML =
         '<div class="post-category">'+esc(catName)+'</div>'+
         '<div class="post-title">'+esc(t.title)+'</div>'+

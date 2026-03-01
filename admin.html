@@ -139,7 +139,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
     <div class="fg"><label>Username</label><input type="text" id="adminUser" placeholder="admin" autocomplete="off"></div>
     <div class="fg"><label>Password</label><input type="password" id="adminPass" placeholder="••••••••"></div>
     <button class="btn-submit" id="btnAdminLogin">Access Dashboard</button>
-    <div class="login-hint" id="loginHint">Loading credentials from config.js&hellip;</div>
+
   </div>
 </div>
 
@@ -408,15 +408,6 @@ document.addEventListener('click',extendSession);document.addEventListener('keyd
 document.getElementById('btnLogout').addEventListener('click',logout);
 
 /* ── LOGIN ── */
-// Show current credentials from config.js
-(function(){
-  try{
-    var h=document.getElementById('loginHint');
-    var u=(typeof ADMIN_USERNAME!=='undefined')?ADMIN_USERNAME:'admin';
-    var p=(typeof ADMIN_PASSWORD!=='undefined')?ADMIN_PASSWORD:'admin123';
-    h.innerHTML='Username: <strong>'+u+'</strong> &nbsp;&middot;&nbsp; Password: <strong>'+p+'</strong> &mdash; change in <strong>config.js</strong>';
-  }catch(e){}
-})();
 
 document.getElementById('btnAdminLogin').addEventListener('click',doAdminLogin);
 document.getElementById('adminPass').addEventListener('keydown',function(e){if(e.key==='Enter')doAdminLogin()});
