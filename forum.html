@@ -333,7 +333,7 @@ async function doLogin(){
       return;
     }
     currentUser=res.data;
-    sessionStorage.setItem('grace_session',JSON.stringify({id:currentUser.id}));
+    sessionStorage.setItem('grace_session',JSON.stringify({id:currentUser.id, first_name:currentUser.first_name, last_name:currentUser.last_name}));
     showForum();
   } catch(err) {
     errEl.textContent='Connection error: '+err.message+'. Check your config.js Supabase credentials.';

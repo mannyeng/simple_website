@@ -454,7 +454,7 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     (catNames.length?'<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(184,150,62,.2)"><span class="mc-label">Categories Joined</span><span class="mc-value" style="font-size:.88rem">'+catNames.join(', ')+'</span></div>':'');
 
   // Save session
-  sessionStorage.setItem('grace_session', JSON.stringify({id:member.id}));
+  sessionStorage.setItem('grace_session', JSON.stringify({id:member.id, first_name:firstName, last_name:lastName}));
 });
 
 /* ── TERMS MODAL ── */
