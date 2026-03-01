@@ -89,6 +89,32 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .btn-home{display:inline-block;padding:16px 40px;background:var(--gold);color:white;font-family:'Jost',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;transition:background .3s}
 .btn-home:hover{background:var(--bark)}
 @media(max-width:900px){nav{padding:18px 24px}.page-wrap{grid-template-columns:1fr}.left-panel{display:none}.right-panel{padding:100px 20px 60px}.form-card{padding:32px 24px}.form-row{grid-template-columns:1fr}}
+
+/* ── TERMS MODAL ── */
+.terms-overlay{display:none;position:fixed;inset:0;background:rgba(26,20,16,.88);z-index:600;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;backdrop-filter:blur(8px)}
+.terms-overlay.open{display:flex}
+.terms-box{background:var(--warm-white);border:1px solid rgba(184,150,62,.2);max-width:680px;width:100%;position:relative;margin:auto;display:flex;flex-direction:column;max-height:82vh}
+.terms-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-light),var(--gold),transparent)}
+.terms-header{padding:32px 36px 20px;border-bottom:1px solid rgba(184,150,62,.12);flex-shrink:0}
+.terms-header h3{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--bark);margin-bottom:4px}
+.terms-header p{font-size:.72rem;color:var(--stone);letter-spacing:.04em}
+.terms-close{position:absolute;top:16px;right:20px;background:none;border:none;cursor:pointer;color:var(--stone);font-size:1.1rem;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:color .2s;font-family:'Jost',sans-serif}
+.terms-close:hover{color:var(--bark)}
+.terms-body{padding:28px 36px;overflow-y:auto;flex:1;line-height:1.8;color:var(--bark)}
+.terms-body h4{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--bark);margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid rgba(184,150,62,.15)}
+.terms-body h4:first-child{margin-top:0}
+.terms-body p{font-size:.82rem;margin-bottom:10px;color:var(--stone)}
+.terms-body ul{margin:6px 0 12px 18px;padding:0}
+.terms-body ul li{font-size:.82rem;color:var(--stone);margin-bottom:5px}
+.terms-body ol{margin:6px 0 12px 18px;padding:0}
+.terms-body ol li{font-size:.82rem;color:var(--stone);margin-bottom:5px}
+.terms-body .meta{font-size:.7rem;color:var(--muted);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(184,150,62,.1)}
+.terms-body .meta span{color:var(--gold)}
+.terms-body blockquote{border-left:2px solid var(--gold);padding:8px 14px;margin:12px 0;font-style:italic;color:var(--stone);font-size:.82rem;background:rgba(184,150,62,.04)}
+.terms-footer{padding:20px 36px;border-top:1px solid rgba(184,150,62,.12);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(245,240,232,.8)}
+.terms-footer p{font-size:.7rem;color:var(--muted)}
+.terms-accept-btn{background:var(--gold);color:white;border:none;padding:11px 28px;font-family:'Jost',sans-serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.terms-accept-btn:hover{background:var(--bark)}
 </style>
 </head>
 <body>
@@ -105,7 +131,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
   <div class="left-panel">
     <div class="eyebrow">Join Our Ministry </div>
     <h1>Become Part of<br>Something <em>Greater</em></h1>
-    <p class="desc">Creating an account unlocks your full community experience — from forum discussions to conference sign-ups, access to relevant articles and more</p>
+    <p class="desc">Creating an account unlocks your full community experience — from forum discussions to Timeline project, access to relevant articles and more</p>
     <ul class="benefits">
       <li class="benefit-item">
         <div class="benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
@@ -217,7 +243,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
         </div>
         <div class="cb-group">
           <input type="checkbox" id="terms">
-          <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Community Guidelines</a>. *</label>
+          <label for="terms">I agree to the <a href="#" onclick="openTerms(event)">Terms of Service</a> and <a href="#" onclick="openTerms(event)">Forum Guidelines</a>. *</label>
         </div>
         <div class="global-err" id="globalErr"></div>
         <button type="button" class="btn-submit" id="submitBtn">Create My Account</button>
@@ -430,6 +456,135 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   // Save session
   sessionStorage.setItem('grace_session', JSON.stringify({id:member.id}));
 });
+
+/* ── TERMS MODAL ── */
+function openTerms(e){
+  e.preventDefault();
+  document.getElementById('termsOverlay').classList.add('open');
+}
+function closeTerms(){
+  document.getElementById('termsOverlay').classList.remove('open');
+}
+function acceptTerms(){
+  document.getElementById('terms').checked = true;
+  closeTerms();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeTerms();
+});
 </script>
-</body>
-</html>
+
+<!-- TERMS OF SERVICE MODAL -->
+<div class="terms-overlay" id="termsOverlay" onclick="if(event.target===this)closeTerms()">
+  <div class="terms-box">
+    <button class="terms-close" onclick="closeTerms()">&#x2715;</button>
+    <div class="terms-header">
+      <h3>Terms of Service &amp; Forum Guidelines</h3>
+      <p>Catechist&#x27;s Forum &mdash; St. Thomas Syro Malabar Catholic Diocese of Chicago</p>
+    </div>
+    <div class="terms-body">
+      <div class="meta">Effective Date: <span>February 28, 2026</span> &nbsp;&middot;&nbsp; Forum: <span>Catechist&#x27;s Forum</span></div>
+
+      <h4>1. Mission and Purpose</h4>
+      <p>This forum exists to:</p>
+      <ul>
+        <li>Support catechists in their ministry of teaching the Catholic faith.</li>
+        <li>Encourage faithful discussion rooted in Sacred Scripture, Sacred Tradition, and the Magisterium of the Catholic Church.</li>
+        <li>Promote charity, unity, and holiness in online interaction.</li>
+        <li>Provide a respectful space for questions, formation, and mutual encouragement.</li>
+      </ul>
+      <p>All participation must reflect the spirit of the Gospel of Jesus Christ and the teachings of the Catholic Church.</p>
+
+      <h4>2. Acceptance of Terms</h4>
+      <p>By accessing or participating in this forum, you agree to:</p>
+      <ul>
+        <li>Follow these Terms of Service and Community Guidelines.</li>
+        <li>Respect the teachings of the Catholic Church.</li>
+        <li>Accept moderation decisions made by forum administrators.</li>
+      </ul>
+      <p>Failure to comply may result in content removal, temporary suspension, or permanent removal from the forum.</p>
+
+      <h4>3. Fidelity to Catholic Teaching</h4>
+      <p>This forum adheres fully to the teachings of the Catholic Church as expressed in Sacred Scripture, Sacred Tradition, the Catechism of the Catholic Church, and the Magisterium.</p>
+      <p>Participants must:</p>
+      <ul>
+        <li>Refrain from promoting teachings contrary to Catholic doctrine.</li>
+        <li>Avoid public dissent against defined Church teachings.</li>
+        <li>Present theological opinions clearly as personal reflections when not defined doctrine.</li>
+        <li>Distinguish between doctrine, discipline, and personal opinion.</li>
+      </ul>
+      <p>Respectful theological inquiry is welcome. However, advocacy of positions opposed to Catholic moral or doctrinal teaching is not permitted.</p>
+
+      <h4>4. Christian Conduct and Charity</h4>
+      <p><strong>A. Charity</strong> &mdash; Speak with kindness and respect. Avoid sarcasm, ridicule, mockery, or hostility. Correct others gently and constructively.</p>
+      <p><strong>B. Humility</strong> &mdash; Be open to correction. Avoid prideful or combative attitudes. Seek truth rather than victory in discussion.</p>
+      <p><strong>C. Unity</strong> &mdash; Avoid divisive language. Do not incite factionalism. Promote communion within the Church.</p>
+      <blockquote>&#x201C;Speak the truth in love&#x201D; (Ephesians 4:15) should guide all interactions.</blockquote>
+
+      <h4>5. Prohibited Content</h4>
+      <p>The following content is strictly prohibited:</p>
+      <ol>
+        <li>Heretical or anti-Catholic teachings.</li>
+        <li>Blasphemy or disrespect toward God, the Blessed Virgin Mary, the saints, clergy, or sacred things.</li>
+        <li>Hate speech, racism, discrimination, or personal attacks.</li>
+        <li>Political campaigning or partisan agitation unrelated to Catholic moral teaching.</li>
+        <li>Sexual content or explicit material.</li>
+        <li>Gossip, detraction, or revealing private information.</li>
+        <li>Defamation of individuals, clergy, parishes, or dioceses.</li>
+        <li>Promotion of illegal activities.</li>
+        <li>Spam, advertising, or self-promotion without permission.</li>
+        <li>Content that scandalizes or leads others into sin.</li>
+      </ol>
+      <p>Moderators reserve the right to remove any content deemed inappropriate.</p>
+
+      <h4>6. Theological Discussions</h4>
+      <ul>
+        <li>Cite reliable Catholic sources when possible.</li>
+        <li>Avoid presenting speculation as Church teaching.</li>
+        <li>Recognize legitimate diversity within approved Catholic theology.</li>
+        <li>Respect the authority of Vicars, bishops and the Holy Father.</li>
+      </ul>
+
+      <h4>7. Role of Moderators</h4>
+      <p>Moderators are appointed to preserve doctrinal fidelity, maintain respectful dialogue, and enforce community guidelines. They may edit or remove posts, issue warnings, suspend accounts, or permanently remove members. All moderation decisions are final.</p>
+
+      <h4>8. Privacy and Confidentiality</h4>
+      <ul>
+        <li>Protect confidential information.</li>
+        <li>Avoid sharing personal pastoral situations without permission.</li>
+        <li>Refrain from posting private conversations without consent.</li>
+        <li>Catechetical discussions involving minors must avoid identifying details.</li>
+      </ul>
+
+      <h4>9. Intellectual Property</h4>
+      <p>By posting content, you confirm you have the right to share the material, grant the forum a non-exclusive right to display your content, and agree not to post copyrighted material without permission. Always credit original sources.</p>
+
+      <h4>10. Appropriate Use</h4>
+      <p>The forum may not be used for commercial gain, recruiting for unrelated causes, fundraising without admin approval, or political mobilization. This is a catechetical formation space, not a general social platform.</p>
+
+      <h4>11. Spiritual Responsibility</h4>
+      <p>As catechists, members are reminded that you represent Christ and His Church, online behavior is a form of witness, and your words can build up or harm souls. Pray before engaging in difficult discussions, examine conscience before posting, and seek reconciliation if conflict arises.</p>
+
+      <h4>12. Conflict Resolution</h4>
+      <ol>
+        <li>Address concerns privately when possible.</li>
+        <li>Avoid public escalation.</li>
+        <li>Contact moderators if necessary.</li>
+        <li>Seek reconciliation in a Christian spirit.</li>
+      </ol>
+      <p>Public shaming or retaliatory posting is prohibited.</p>
+
+      <h4>13. Reporting Violations</h4>
+      <p>Members may report violations via direct message to administrators, the Report function (if available), or by email to <a href="/cdn-cgi/l/email-protection#7518141b0010195b1f1a0610051d351218141c195b161a18" style="color:var(--gold)"><span class="__cf_email__" data-cfemail="bbd6dad5ceded795d1d4c8decbd3fbdcd6dad2d795d8d4d6">[email&#160;protected]</span></a>. All reports will be handled confidentially.</p>
+
+      <h4>14. Termination of Access</h4>
+      <p>The forum reserves the right to suspend or terminate accounts, remove content, and restrict access without prior notice if guidelines are violated. Repeated or serious violations will result in permanent removal.</p>
+
+      <h4>15. Amendments</h4>
+      <p>Administrators may update these Terms and Guidelines at any time. Continued participation implies acceptance of revisions.</p>
+
+      <h4>16. Statement of Commitment</h4>
+      <p>By participating in this forum, you affirm your desire to serve the mission of the Catholic Church, uphold the dignity of every human person, promote truth with charity, and conduct yourself as a faithful disciple of Jesus Christ.</p>
+    </div>
+    <div class="terms-footer">
+      <p>Scroll to read all terms before accepting
