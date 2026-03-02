@@ -173,16 +173,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
             <span class="err-msg" id="err-lastName">Please enter your last name.</span>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Date of Birth</label>
-            <input type="date" id="dob">
-          </div>
-          <div class="form-group">
+        <div class="form-group">
             <label>Phone Number</label>
             <input type="tel" id="phone" placeholder="(555) 000-0000">
           </div>
-        </div>
         <div class="section-lbl">Account Details</div>
         <div class="form-group">
           <label>Email Address *</label>
@@ -379,6 +373,32 @@ function clearAll(){
 }
 function globalErr(msg){var el=document.getElementById('globalErr');el.textContent=msg;el.classList.add('show');el.scrollIntoView({behavior:'smooth',block:'center'})}
 
+/* ── MEMBER ID GENERATION (CF-YYYY-NNNN) ── */
+async function generateMemberId(){
+  var year = new Date().getFullYear();
+  var prefix = 'CF-' + year + '-';
+  try{
+    // Count existing members this year to get next sequence number
+    var res = await sb.from('members')
+      .select('id')
+      .like('id', prefix + '%')
+      .order('id', {ascending: false})
+      .limit(1);
+    var seq = 1;
+    if(res.data && res.data.length){
+      // Extract number from last ID e.g. CF-2026-0007 → 7
+      var last = res.data[0].id;
+      var num = parseInt(last.replace(prefix, ''), 10);
+      if(!isNaN(num)) seq = num + 1;
+    }
+    // Zero-pad to 4 digits (0001, 0002 … 9999)
+    return prefix + String(seq).padStart(4, '0');
+  }catch(e){
+    // Fallback: use timestamp suffix to avoid collisions
+    return prefix + Date.now().toString().slice(-4);
+  }
+}
+
 document.getElementById('submitBtn').addEventListener('click', async function(){
   clearAll();
   var firstName=document.getElementById('firstName').value.trim();
@@ -387,7 +407,6 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   var password=document.getElementById('password').value;
   var confirm=document.getElementById('confirmPassword').value;
   var terms=document.getElementById('terms').checked;
-  var dob=document.getElementById('dob').value;
   var phone=document.getElementById('phone').value.trim();
   var source=document.getElementById('source').value;
   var ministry=document.getElementById('ministry').value;
@@ -413,10 +432,10 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
 
     var selectedCats = getSelectedCats();
     var member = {
-      id: 'GC-'+Date.now(),
+      id: await generateMemberId(),
       first_name: firstName, last_name: lastName,
       email: email.toLowerCase(), password: hashPw(password),
-      dob: dob||null, phone: phone||null,
+      phone: phone||null,
       source: source||null, ministry: ministry||null,
       newsletter: newsletter,
       assigned_categories: selectedCats,

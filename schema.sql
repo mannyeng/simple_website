@@ -10,7 +10,7 @@ create table if not exists members (
   last_name text not null,
   email text unique not null,
   password text not null,
-  dob text,
+
   phone text,
   source text,
   ministry text,
@@ -173,3 +173,10 @@ create policy "allow_all_article_likes" on article_likes for all using (true) wi
 -- create policy "allow_article_image_upload" on storage.objects for insert with check (bucket_id = 'article-images');
 -- create policy "allow_article_image_read" on storage.objects for select using (bucket_id = 'article-images');
 -- create policy "allow_article_image_delete" on storage.objects for delete using (bucket_id = 'article-images');
+
+-- =============================================
+-- MIGRATION: Remove date of birth column
+-- Run this in Supabase SQL Editor if the
+-- members table already exists:
+-- =============================================
+-- alter table members drop column if exists dob;
