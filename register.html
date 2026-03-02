@@ -115,6 +115,17 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .terms-footer p{font-size:.7rem;color:var(--muted)}
 .terms-accept-btn{background:var(--gold);color:white;border:none;padding:11px 28px;font-family:'Jost',sans-serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .2s}
 .terms-accept-btn:hover{background:var(--bark)}
+
+/* ── PARISH AUTOCOMPLETE ── */
+.parish-wrap{position:relative}
+.parish-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid rgba(184,150,62,.25);border-top:none;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(26,20,16,.1)}
+.parish-dropdown.open{display:block}
+.parish-option{padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(184,150,62,.07);transition:background .15s}
+.parish-option:last-child{border-bottom:none}
+.parish-option:hover,.parish-option.highlighted{background:rgba(184,150,62,.08)}
+.parish-option .p-name{font-size:.82rem;color:var(--bark);font-weight:500}
+.parish-option .p-addr{font-size:.68rem;color:var(--stone);margin-top:2px}
+.parish-no-results{padding:12px 14px;font-size:.78rem;color:var(--muted);font-style:italic}
 </style>
 </head>
 <body>
@@ -200,30 +211,57 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
             <span class="err-msg" id="err-confirm">Passwords do not match.</span>
           </div>
         </div>
-        <div class="section-lbl">Community Preferences</div>
+        <div class="section-lbl">Teaching Information</div>
         <div class="form-row">
           <div class="form-group">
-            <label>How did you hear about us?</label>
-            <select id="source">
+            <label>Which Grade Do You Teach?</label>
+            <select id="grade">
               <option value="">Select one</option>
-              <option value="friend">A Friend / Family</option>
-              <option value="social">Social Media</option>
-              <option value="search">Online Search</option>
-              <option value="event">Community Event</option>
-              <option value="other">Other</option>
+              <option value="principal">Principal / Vice-Principal</option>
+              <option value="volunteer">Volunteer</option>
+              <option value="grade1">Grade 1</option>
+              <option value="grade2">Grade 2</option>
+              <option value="grade3">Grade 3</option>
+              <option value="grade4">Grade 4</option>
+              <option value="grade5">Grade 5</option>
+              <option value="grade6">Grade 6</option>
+              <option value="grade7">Grade 7</option>
+              <option value="grade8">Grade 8</option>
+              <option value="grade9">Grade 9</option>
+              <option value="grade10">Grade 10</option>
+              <option value="grade11">Grade 11</option>
+              <option value="grade12">Grade 12</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Ministry Interest</label>
-            <select id="ministry">
+            <label>Years Teaching Catechism</label>
+            <select id="yearsTeaching">
               <option value="">Select one</option>
-              <option value="youth">Youth Ministry</option>
-              <option value="worship">Worship Team</option>
-              <option value="outreach">Outreach &amp; Service</option>
-              <option value="study">Bible Study</option>
-              <option value="general">General Member</option>
+              <option value="lt1">Less than 1 year</option>
+              <option value="2-10">2 – 10 years</option>
+              <option value="11-20">11 – 20 years</option>
+              <option value="gt20">More than 20 years</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label>Parish / Mission</label>
+          <div class="parish-wrap">
+            <input type="text" id="parishInput" placeholder="Type to search your parish..." autocomplete="off" oninput="filterParishes()" onfocus="filterParishes()" onblur="setTimeout(closeParishDropdown,200)">
+            <input type="hidden" id="parishId" value="">
+            <input type="hidden" id="parishName" value="">
+            <div class="parish-dropdown" id="parishDropdown"></div>
+          </div>
+        </div>
+        <div class="section-lbl" style="margin-top:4px">How Did You Hear About Us?</div>
+        <div class="form-group">
+          <select id="source">
+            <option value="">Select one</option>
+            <option value="friend">Another Catechist</option>
+            <option value="social">Katechein</option>
+            <option value="search">Regional Conferences</option>
+            <option value="other">Other</option>
+          </select>
         </div>
         <div class="section-lbl" style="margin-top:28px">Forum Categories</div>
         <p style="font-size:.78rem;color:var(--stone);margin-bottom:14px;font-weight:300">Select the discussion categories you would like to join. You can change these later.</p>
@@ -409,7 +447,10 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   var terms=document.getElementById('terms').checked;
   var phone=document.getElementById('phone').value.trim();
   var source=document.getElementById('source').value;
-  var ministry=document.getElementById('ministry').value;
+  var grade=document.getElementById('grade').value;
+  var yearsTeaching=document.getElementById('yearsTeaching').value;
+  var parishId=document.getElementById('parishId').value;
+  var parishName=document.getElementById('parishName').value||document.getElementById('parishInput').value.trim();
   var newsletter=document.getElementById('newsletter').checked;
 
   var ok=true;
@@ -436,7 +477,7 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
       first_name: firstName, last_name: lastName,
       email: email.toLowerCase(), password: hashPw(password),
       phone: phone||null,
-      source: source||null, ministry: ministry||null,
+      source: source||null, grade: grade||null, years_teaching: yearsTeaching||null, parish_id: parishId?parseInt(parishId):null, parish_name: parishName||null,
       newsletter: newsletter,
       assigned_categories: selectedCats,
       followed_categories: selectedCats.slice(), // auto-follow chosen categories
@@ -457,17 +498,21 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   // Show success
   document.getElementById('formState').style.display='none';
   document.getElementById('successState').classList.add('show');
-  var ml={youth:'Youth Ministry',worship:'Worship Team',outreach:'Outreach & Service',study:'Bible Study',general:'General Member'};
+  var gradeLabels={volunteer:'Volunteer',principal:'Principal / Vice-Principal',grade1:'Grade 1',grade2:'Grade 2',grade3:'Grade 3',grade4:'Grade 4',grade5:'Grade 5',grade6:'Grade 6',grade7:'Grade 7',grade8:'Grade 8',grade9:'Grade 9',grade10:'Grade 10',grade11:'Grade 11',grade12:'Grade 12'};
+  var yearsLabels={'lt1':'Less than 1 year','2-10':'2 – 10 years','11-20':'11 – 20 years','gt20':'More than 20 years'};
   var d=new Date(member.joined_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   var catNames = Array.from(document.querySelectorAll('.cat-checkbox:checked')).map(function(c){
     var lbl = c.closest('.cat-pick'); return lbl ? lbl.querySelector('.cp-name').textContent : '';
   }).filter(Boolean);
+  var parishDisplay = document.getElementById('parishInput').value.trim() || '—';
   document.getElementById('memberCard').innerHTML=
     '<span class="mc-label">Member ID</span><span class="mc-value">'+member.id+'</span>'+
     '<div class="mc-grid">'+
       '<div><span class="mc-label" style="margin-top:10px">Full Name</span><span class="mc-value">'+firstName+' '+lastName+'</span></div>'+
       '<div><span class="mc-label" style="margin-top:10px">Email</span><span class="mc-value" style="font-size:.85rem">'+email+'</span></div>'+
-      '<div><span class="mc-label" style="margin-top:10px">Ministry</span><span class="mc-value">'+(ml[ministry]||'General Member')+'</span></div>'+
+      '<div><span class="mc-label" style="margin-top:10px">Grade Teaching</span><span class="mc-value">'+(gradeLabels[grade]||'—')+'</span></div>'+
+      '<div><span class="mc-label" style="margin-top:10px">Years Teaching</span><span class="mc-value">'+(yearsLabels[yearsTeaching]||'—')+'</span></div>'+
+      '<div><span class="mc-label" style="margin-top:10px">Parish / Mission</span><span class="mc-value" style="font-size:.82rem">'+parishDisplay+'</span></div>'+
       '<div><span class="mc-label" style="margin-top:10px">Joined</span><span class="mc-value">'+d+'</span></div>'+
     '</div>'+
     (catNames.length?'<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(184,150,62,.2)"><span class="mc-label">Categories Joined</span><span class="mc-value" style="font-size:.88rem">'+catNames.join(', ')+'</span></div>':'');
@@ -491,6 +536,67 @@ function acceptTerms(){
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape') closeTerms();
 });
+
+/* ── PARISH AUTOCOMPLETE ── */
+var PARISHES = [{"name": "Holy Family Syro-Malabar Catholic Church, Phoenix, AZ", "address": "3221 N. 24th Street, Phoenix, AZ 85016, USA"}, {"name": "Infant Jesus Syro-Malabar Catholic Church, Sacramento, CA", "address": "6200 McMahon Drive, Sacramento, CA 95824, USA"}, {"name": "St. Alphonsa Syro-Malabar Catholic Church, Los Angeles, CA", "address": "215 N MacNeil St., San Fernando, CA 91340, USA"}, {"name": "St. Chavara Syro-Malabar Catholic Church, Bakersfield, CA", "address": "4500 Buena Vista Rd, Bakersfield, CA 93311, USA"}, {"name": "St. John Paul II Syro-Malabar Knanaya Catholic Mission, Sacramento, CA", "address": "8720 Florin Rd., Sacramento, CA 95828, USA"}, {"name": "St. Joseph Syro-Malabar Catholic Mission, San Diego, CA", "address": "15546 Pomerado Rd, Poway, CA 92064, USA"}, {"name": "St. Joseph Syro-Malabar Knanaya Catholic Mission, Tracy, CA", "address": "163 W Easton, Tracy, CA 95376, USA"}, {"name": "St. Jude Syro-Malabar Catholic Mission, San Bernardino, CA", "address": "12745 Oriole Ave, Grand Terrace, CA 92314, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Knanaya Catholic Forane Church, San Jose, CA", "address": "324 Gloria Ave, San Jose, CA 95127, USA"}, {"name": "St. Pius X Syro-Malabar Knanaya Catholic Church, Los Angeles, CA", "address": "124 N 5th St, Montebello, CA 90640, USA"}, {"name": "St. Teresa of Calcutta Syro-Malabar Catholic Mission, Livermore, CA", "address": "1315 Lomitas Ave, Livermore, CA 94550, USA"}, {"name": "St. Thomas Apostle Syro-Malabar Catholic Forane Church, Orange, CA", "address": "743 N. Eckoff St., Orange, CA 92868, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Church, San Francisco, CA", "address": "42500 Gatewood St., Fremont, CA 94538, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Church, Denver, CO", "address": "3601 N Humboldt St., Denver, CO 80205, USA"}, {"name": "Our Lady of Assumption Syro-Malabar Catholic Mission, Norwalk, CT", "address": "25 Cliff St., Norwalk, CT 06854, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Church, Hartford, CT", "address": "30 Echo Lane, West Hartford, CT 06107, USA"}, {"name": "Holy Trinity Syro-Malabar Catholic Mission, Delaware", "address": "345 Bear Christiana Rd, Bear, DE 19701, USA"}, {"name": "Our Lady of Health Syro-Malabar Forane Catholic Church, Coral Springs, FL", "address": "201 North University Dr, Coral Springs, FL 33071, USA"}, {"name": "Sacred Heart Syro-Malabar Knanaya Catholic Forane Church, Tampa, FL", "address": "3920 S. King Avenue, Brandon, FL 33511, USA"}, {"name": "St. George Syro-Malabar Catholic Mission, Miami, FL", "address": "9200 SW 107th Ave., Miami, FL 33176, USA"}, {"name": "St. Joseph Syro-Malabar Catholic Church, Tampa, FL", "address": "5501 Williams Rd, Seffner, FL 33584, USA"}, {"name": "St. Jude Syro-Malabar Knanaya Catholic Church, Miami, FL", "address": "1105 NW 6th Avenue, Fort Lauderdale, FL 33311, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Catholic Church, Orlando, FL", "address": "2581 S. Sanford Ave, Sanford, FL 32773, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Catholic Mission, Jacksonville, FL", "address": "4650 Kernan Blvd. S, Jacksonville, FL 32224, USA"}, {"name": "St. Stephen‚Äôs Syro-Malabar Knanaya Catholic Church, Orlando, FL", "address": "14801 Sussex Dr., Orlando, FL 32826, USA"}, {"name": "Holy Family Syro-Malabar Knanaya Catholic Church, Atlanta, GA", "address": "3885 Rosebud Road, Loganville, GA 30052, USA"}, {"name": "St. Alphonsa Syro-Malabar Catholic Forane Church, Atlanta, GA", "address": "4561 Rosebud Road, Loganville, GA 30052, USA"}, {"name": "St. John Paul II Syro-Malabar Catholic Mission, Cumming, GA", "address": "4599 Rosebud Road, Loganville, GA 30052, USA"}, {"name": "Mar Thoma Sleeha Syro-Malabar Cathedral, Chicago, IL", "address": "5000 St Charles Rd, Bellwood, IL 60104, USA"}, {"name": "Sacred Heart Syro-Malabar Knanaya Catholic Forane Church, Bensenville, IL", "address": "145 E. Grand Ave., Bensenville, IL 60106, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Knanaya Catholic Church, Chicago, IL", "address": "7800 W. Lyons Street, Morton Grove, IL 60053, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Diocese of Chicago, IL", "address": "372 S Prairie Ave, Elmhurst, IL 60126, USA"}, {"name": "Divine Mercy Syro-Malabar Catholic Mission, Louisville, KY", "address": "3926 Poplar Level Road, Louisville, KY 40213, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Church, Boston, MA", "address": "41 Brook St., Framingham, MA 01701, USA"}, {"name": "Our Lady of Perpetual Help Syro-Malabar Catholic Church, Washington, DC", "address": "20533 Zion Rd, Gaithersburg, MD 20882, USA"}, {"name": "St. Alphonsa Syro-Malabar Catholic Church, Baltimore, MD", "address": "5709 Oakland Road, Halethorpe, MD 21227, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Knanaya Catholic Church, Detroit, MI", "address": "3238 Royal Ave, Berkley, MI 48072, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Church, Detroit, MI", "address": "17235 Mt. Vernon Street, Southfield, MI 48075, USA"}, {"name": "St. Alphonsa Syro-Malabar Catholic Mission, Minneapolis, MN", "address": "651 Virginia St., St. Paul, MN 55103, USA"}, {"name": "St. Paul Syro-Malabar Knanaya Catholic Mission, Minneapolis, MN", "address": "629 2nd St. NE, Minneapolis, MN 55413, USA"}, {"name": "Sacred Heart Syro-Malabar Catholic Mission, St. Louis, MO", "address": "615 Dunn Rd., Hazelwood, MO 63042, USA"}, {"name": "St. Therese of Lisieux Syro-Malabar Catholic Mission, Kansas City, MO", "address": "4101 E. 105th Terrace, Kansas City, MO 64137, USA"}, {"name": "Lourdes Matha Syro-Malabar Catholic Church, Raleigh/Durham, NC", "address": "1400 Vision Dr, Apex, NC 27523, USA"}, {"name": "Our Lady of Fatima Syro-Malabar Catholic Mission, Raleigh, NC", "address": "103 Holmhurst Ct., Cary, NC 27519, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Catholic Church, Charlotte, NC", "address": "715 E Arrowood Rd, Charlotte, NC 28217, USA"}, {"name": "Christ the King Syro-Malabar Knanaya Catholic Church, Carteret, NJ", "address": "67 Fitch St., Carteret, NJ 07008, USA"}, {"name": "St. George Syro-Malabar Catholic Church, Paterson, NJ", "address": "408 Getty Ave., Paterson, NJ 07503, USA"}, {"name": "St. Jude Syro-Malabar Catholic Church, South Jersey, NJ", "address": "250 South Route 73, Hammonton, NJ 08037, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Forane Church, Somerset, NJ", "address": "508 Elizabeth Avenue, Somerset, NJ 08873, USA"}, {"name": "St. Mother Teresa of Calcutta Syro-Malabar Catholic Church, Las Vegas, NV", "address": "240 S. Cholla Street, Henderson, NV 89015, USA"}, {"name": "St. Stephen Syro-Malabar Knanaya Catholic Mission, Las Vegas, NV", "address": "2461 E. Flamingo Rd., Las Vegas, NV 89121, USA"}, {"name": "Bl. Kunjachan Syro-Malabar Catholic Mission, Staten Island, NY", "address": "463 Tompkins Ave., Staten Island, NY 10305, USA"}, {"name": "Holy Family Syro-Malabar Catholic Church, Rockland, NY", "address": "5 Willow Tree Road, Monsey, NY 10952, USA"}, {"name": "St. Joseph Syro-Malabar Catholic Mission, Hudson Valley, NY", "address": "3094 Albany Post Rd, Buchanan, NY 10511, USA"}, {"name": "St. Joseph Syro-Malabar Knanaya Catholic Mission, Westchester, NY", "address": "18 Trinity St., Yonkers, NY 10701, USA"}, {"name": "St. Mary Syro-Malabar Catholic Church, Long Island, NY", "address": "926 Round Swamp Rd, Old Bethpage, NY 11804, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Knanaya Catholic Church, Haverstraw, NY", "address": "46 Conklin Ave., Haverstraw, NY 10927, USA"}, {"name": "St. Stephen Syro-Malabar Knanaya Catholic Forane Church, Hempstead, NY", "address": "384 Clinton St., Hempstead, NY 11550, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Forane Church, Bronx, NY", "address": "810 E 221 St., Bronx, NY 10467, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Mission, Brooklyn, NY", "address": "198 Euclid Ave, Brooklyn, NY 11208, USA"}, {"name": "St. Chavara Syro-Malabar Catholic Mission, Cincinnati, OH", "address": "7600 Winton Rd, Cincinnati, OH 45224, USA"}, {"name": "St. Mary Syro-Malabar Catholic Mission, Columbus, OH", "address": "893 Hamlet St., Columbus, OH 43021, USA"}, {"name": "St. Raphael Syro-Malabar Catholic Mission, Cleveland, OH", "address": "12503 Buckingham Ave, Cleveland, OH 44120, USA"}, {"name": "Holy Family Syro-Malabar Catholic Church, Oklahoma City, OK", "address": "7501 NW Expressway, Oklahoma City, OK 73132, USA"}, {"name": "St. John Neumann Syro-Malabar Knanaya Catholic Mission, Philadelphia, PA", "address": "1900 Meadowbrook Rd., Feasterville, PA 19053, USA"}, {"name": "St. Joseph Syro-Malabar Catholic Mission, Harrisburg, PA", "address": "300 West Pine St, Palmyra, PA 17078, USA"}, {"name": "St. Mary‚Äôs Syro-Malabar Catholic Mission, Pittsburgh, PA", "address": "1607 Greentree Rd., Pittsburgh, PA 15220, USA"}, {"name": "St. Sebastian Syro-Malabar Catholic Mission, Exton, PA", "address": "608 Welsh Rd, Philadelphia, PA 19115, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Forane Church, Philadelphia, PA", "address": "608 Welsh Rd, Philadelphia, PA 19115, USA"}, {"name": "St. Theresa of Calcutta Syro-Malabar Catholic Mission, Nashville, TN", "address": "1227 7th Ave., Nashville, TN 37208, USA"}, {"name": "Christ the King Syro-Malabar Knanaya Catholic Church, Dallas DFW, TX", "address": "13565 Webb Chapel Rd., Farmers Branch, TX 75234, USA"}, {"name": "Divine Mercy Syro-Malabar Catholic Parish, Edinburg, TX", "address": "300 W. Cano St., Edinburg, TX 78539, USA"}, {"name": "St. Alphonsa Syro-Malabar Catholic Church, Austin, TX", "address": "3600 County Road 175, Leander, TX 78641, USA"}, {"name": "St. Alphonsa Syro-Malabar Catholic Church, Coppell, TX", "address": "200 S Heartz Rd, Coppell, TX 75019, USA"}, {"name": "St. Antony Syro-Malabar Knanaya Catholic Church, San Antonio, TX", "address": "9345 Oakland Road, San Antonio, TX 78240, USA"}, {"name": "St. Chavara Syro-Malabar Catholic Mission, North Houston, TX", "address": "231 Boardwalk Parkway, Stafford, TX 77477, USA"}, {"name": "St. Joseph Syro-Malabar Catholic Forane Church, Houston, TX", "address": "211 Present St, Missouri City, TX 77489, USA"}, {"name": "St. Mariam Thresia Syro-Malabar Mission, Dallas, TX", "address": "8668 John Hickman Parkway Ste. 903, Frisco, TX 75034, USA"}, {"name": "St. Mary Syro-Malabar Catholic Church, Pearland, TX", "address": "1610 O‚ÄôDay Rd, Pearland, TX 77581, USA"}, {"name": "St. Mary Syro-Malabar Knanaya Catholic Forane Church, Houston, TX", "address": "6400 W. Fuqua Drive, Missouri City, TX 77489, USA"}, {"name": "St. Thomas Syro-Malabar Catholic Church, San Antonio, TX", "address": "8333 Braun Rd, San Antonio, TX 78254, USA"}, {"name": "St. Thomas The Apostle Syro-Malabar Catholic Forane Church, Garland, TX", "address": "4922 Rosehill Rd, Garland, TX 75043, USA"}];
+
+function filterParishes(){
+  var input    = document.getElementById('parishInput');
+  var dropdown = document.getElementById('parishDropdown');
+  var q        = input.value.trim().toLowerCase();
+
+  // Clear hidden fields while user is still typing
+  document.getElementById('parishId').value   = '';
+  document.getElementById('parishName').value = '';
+
+  if(!q){ dropdown.classList.remove('open'); return; }
+
+  var matches = PARISHES.filter(function(p){
+    return p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q);
+  }).slice(0, 8);
+
+  // Build options using DOM — avoids ALL quote-escaping issues
+  dropdown.innerHTML = '';
+  if(!matches.length){
+    var noRes = document.createElement('div');
+    noRes.className = 'parish-no-results';
+    noRes.textContent = 'No parishes found. Try a different search.';
+    dropdown.appendChild(noRes);
+  } else {
+    matches.forEach(function(p){
+      var idx = PARISHES.indexOf(p) + 1; // 1-based ID
+      var item = document.createElement('div');
+      item.className = 'parish-option';
+
+      var nameEl = document.createElement('div');
+      nameEl.className = 'p-name';
+      nameEl.textContent = p.name;
+
+      var addrEl = document.createElement('div');
+      addrEl.className = 'p-addr';
+      addrEl.textContent = p.address;
+
+      item.appendChild(nameEl);
+      item.appendChild(addrEl);
+
+      // Use mousedown so it fires before the input's blur closes the dropdown
+      item.addEventListener('mousedown', function(e){
+        e.preventDefault(); // prevent blur on input
+        document.getElementById('parishInput').value  = p.name;
+        document.getElementById('parishId').value     = idx;
+        document.getElementById('parishName').value   = p.name;
+        dropdown.classList.remove('open');
+      });
+
+      dropdown.appendChild(item);
+    });
+  }
+  dropdown.classList.add('open');
+}
+
+function closeParishDropdown(){
+  document.getElementById('parishDropdown').classList.remove('open');
+}
 </script>
 
 <!-- TERMS OF SERVICE MODAL -->
