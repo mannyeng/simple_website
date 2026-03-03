@@ -129,7 +129,18 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
 .d-era{font-size:.56rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
 .d-title{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--cream);line-height:1.15;margin-bottom:8px}
 .d-year{font-size:.7rem;letter-spacing:.18em;color:var(--gold-light);margin-bottom:24px}
+.d-img{width:100%;max-height:320px;object-fit:cover;border-radius:3px;margin-bottom:20px;display:none}
 .d-desc{font-size:.88rem;color:var(--stone);line-height:1.95;font-weight:300;white-space:pre-wrap;margin-bottom:24px}
+.ev-img-upload{margin-top:4px}
+.ev-img-drop{border:1.5px dashed rgba(184,150,62,.35);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative}
+.ev-img-drop:hover{border-color:var(--gold)}
+.ev-img-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ev-img-drop p{font-size:.72rem;color:var(--stone);margin:0;pointer-events:none}
+.ev-img-drop span{font-size:.6rem;color:var(--muted);display:block;margin-top:4px;pointer-events:none}
+.ev-img-preview{display:none;margin-top:10px;position:relative}
+.ev-img-preview img{width:100%;max-height:160px;object-fit:cover;border-radius:2px;display:block}
+.ev-img-remove{position:absolute;top:6px;right:6px;background:rgba(26,20,16,.8);border:none;color:var(--cream);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center}
+.card-img{width:100%;height:80px;object-fit:cover;border-radius:2px;margin-bottom:8px;display:block}
 .d-meta{display:flex;align-items:center;gap:10px;font-size:.68rem;color:var(--muted);padding-top:16px;border-top:1px solid rgba(184,150,62,.1)}
 .d-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.52rem;font-weight:700;flex-shrink:0}
 
@@ -234,6 +245,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
     <div class="d-era" id="dEra"></div>
     <div class="d-title" id="dTitle"></div>
     <div class="d-year" id="dYear"></div>
+    <img class="d-img" id="dImg" src="" alt="" style="display:none">
     <div class="d-desc" id="dDesc"></div>
     <div class="d-meta">
       <div class="d-av" id="dAv"></div>
@@ -276,6 +288,18 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
       <div class="fg">
         <label>Description *</label>
         <textarea id="evDesc" placeholder="Describe the event and its historical or theological significance…"></textarea>
+      </div>
+      <div class="fg ev-img-upload">
+        <label>Event Image <span style="font-size:.6rem;opacity:.6;font-weight:300">(optional · JPG, PNG, WEBP · max 5MB)</span></label>
+        <div class="ev-img-drop" id="evImgDrop" ondragover="event.preventDefault()" ondrop="handleEvImgDrop(event)">
+          <input type="file" id="evImgFile" accept="image/jpeg,image/png,image/webp" onchange="handleEvImgSelect()">
+          <p>Click to upload or drag &amp; drop an image</p>
+          <span>JPG, PNG or WEBP · max 5 MB</span>
+        </div>
+        <div class="ev-img-preview" id="evImgPreview">
+          <img id="evImgThumb" src="" alt="Preview">
+          <button class="ev-img-remove" onclick="removeEvImg()" title="Remove image">&#x2715;</button>
+        </div>
       </div>
       <div class="form-acts">
         <button class="btn-cancel" onclick="closeSubmit()">Cancel</button>
@@ -445,6 +469,8 @@ function openDetail(ev){
   document.getElementById('dTitle').textContent=ev.title;
   document.getElementById('dYear').textContent=fmtYear(ev.year);
   document.getElementById('dDesc').textContent=ev.description;
+  var dImg=document.getElementById('dImg');
+  if(ev.image_url){dImg.src=ev.image_url;dImg.style.display='block';}else{dImg.src='';dImg.style.display='none';}
   var av=document.getElementById('dAv');
   av.textContent=initials(ev.author_name);
   av.style.background=avatarColor(ev.author_id);
@@ -478,6 +504,7 @@ function openSubmitForm(){
   document.getElementById('evTitle').value='';
   document.getElementById('evDesc').value='';
   document.getElementById('eraHint').textContent='';
+  removeEvImg();
   document.getElementById('submitOverlay').classList.add('open');
 }
 
@@ -541,6 +568,43 @@ document.getElementById('evYear').addEventListener('input',function(){
 function closeSubmit(){document.getElementById('submitOverlay').classList.remove('open');}
 document.getElementById('submitOverlay').addEventListener('click',function(e){if(e.target===this)closeSubmit();});
 
+/* -- EVENT IMAGE HANDLERS -- */
+var evImgData = null;
+function handleEvImgSelect(){var file=document.getElementById('evImgFile').files[0];if(file)loadEvImgPreview(file);}
+function handleEvImgDrop(e){e.preventDefault();var file=e.dataTransfer.files[0];if(file&&file.type.startsWith('image/'))loadEvImgPreview(file);}
+function loadEvImgPreview(file){
+  if(file.size>5*1024*1024){alert('Image must be under 5MB.');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    evImgData=e.target.result;
+    document.getElementById('evImgThumb').src=evImgData;
+    document.getElementById('evImgPreview').style.display='block';
+    document.getElementById('evImgDrop').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+function removeEvImg(){
+  evImgData=null;
+  document.getElementById('evImgFile').value='';
+  document.getElementById('evImgThumb').src='';
+  document.getElementById('evImgPreview').style.display='none';
+  document.getElementById('evImgDrop').style.display='block';
+}
+async function uploadEvImage(){
+  if(!evImgData) return null;
+  try{
+    var arr=evImgData.split(','),mime=arr[0].match(/:(.*?);/)[1];
+    var bstr=atob(arr[1]),n=bstr.length,u8=new Uint8Array(n);
+    while(n--){u8[n]=bstr.charCodeAt(n);}
+    var blob=new Blob([u8],{type:mime});
+    var ext=mime.split('/')[1].replace('jpeg','jpg');
+    var path='timeline/'+Date.now()+'.'+ext;
+    var res=await sb.storage.from('timeline-images').upload(path,blob,{contentType:mime});
+    if(res.error) throw new Error(res.error.message);
+    return sb.storage.from('timeline-images').getPublicUrl(path).data.publicUrl;
+  }catch(e){console.warn('Image upload failed:',e.message);return null;}
+}
+
 async function submitEvent(){
   var year=document.getElementById('evYear').value;
   var era=document.getElementById('evEra').value;
@@ -557,10 +621,13 @@ async function submitEvent(){
   if(!title){errEl.textContent='Please enter an event title.';errEl.classList.add('show');return;}
   if(!desc){errEl.textContent='Please enter a description.';errEl.classList.add('show');return;}
 
-  btn.disabled=true;btn.textContent='Submitting…';
+  btn.disabled=true;btn.textContent='Uploading…';
   try{
+    var imageUrl=await uploadEvImage();
+    btn.textContent='Submitting…';
     var ev={
       id:'EV-'+Date.now(),year:yInt,era:era,title:title,description:desc,
+      image_url:imageUrl||null,
       author_id:currentUser.id,
       author_name:currentUser.first_name+' '+currentUser.last_name,
       approved:false,created_at:new Date().toISOString()
@@ -569,6 +636,7 @@ async function submitEvent(){
     if(res.error) throw new Error(res.error.message);
     document.getElementById('submitForm').style.display='none';
     document.getElementById('okState').classList.add('show');
+    removeEvImg();
     loadPending();
   }catch(e){
     errEl.textContent='Error: '+e.message;errEl.classList.add('show');

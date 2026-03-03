@@ -116,6 +116,27 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .loading-row{text-align:center;padding:40px;color:var(--stone);font-size:.82rem}
 
 @media(max-width:900px){nav{padding:16px 20px}#dashboard{padding:90px 16px 40px}.stat-grid{grid-template-columns:1fr 1fr}.cat-grid{grid-template-columns:1fr}.session-bar{padding:10px 20px}}
+
+/* TL DETAIL MODAL */
+.tl-detail-overlay{display:none;position:fixed;inset:0;background:rgba(26,20,16,.92);z-index:600;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;backdrop-filter:blur(10px)}
+.tl-detail-overlay.open{display:flex}
+.tl-detail-box{background:var(--card);border:1px solid rgba(184,150,62,.2);max-width:640px;width:100%;position:relative;padding:44px 44px 36px;margin:auto}
+.tl-detail-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),rgba(184,150,62,.8),transparent)}
+.tl-detail-close{position:absolute;top:14px;right:18px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;font-family:'Jost',sans-serif;padding:4px 8px;transition:color .2s}
+.tl-detail-close:hover{color:var(--text)}
+.tl-detail-era{font-size:.56rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.tl-detail-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--text);line-height:1.2;margin-bottom:6px}
+.tl-detail-year{font-size:.68rem;letter-spacing:.18em;color:var(--gold);margin-bottom:22px;opacity:.8}
+.tl-detail-desc{font-size:.87rem;color:var(--muted);line-height:1.9;white-space:pre-wrap;margin-bottom:28px;padding:18px 20px;background:rgba(184,150,62,.04);border-left:2px solid rgba(184,150,62,.2)}
+.tl-detail-meta{display:flex;gap:32px;margin-bottom:28px;padding-top:18px;border-top:1px solid rgba(184,150,62,.12)}
+.tl-detail-meta span{display:flex;flex-direction:column;gap:3px}
+.tl-detail-meta strong{font-size:.82rem;color:var(--text);font-weight:500;display:block}
+.tl-detail-meta em{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-style:normal}
+.tl-detail-actions{display:flex;gap:10px;flex-wrap:wrap}
+.tl-btn-approve{padding:10px 24px;background:rgba(61,107,79,.15);border:1px solid rgba(61,107,79,.4);color:#6b9e75;font-family:'Jost',sans-serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.tl-btn-approve:hover{background:rgba(61,107,79,.3);border-color:#6b9e75}
+.tl-btn-delete{padding:10px 24px;background:rgba(139,58,58,.1);border:1px solid rgba(139,58,58,.3);color:#c47070;font-family:'Jost',sans-serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.tl-btn-delete:hover{background:rgba(139,58,58,.25);border-color:#c47070}
 </style>
 </head>
 <body>
@@ -789,7 +810,7 @@ async function renderTimelineAdmin(){
 
     var wrap = document.createElement('div'); wrap.className='tbl-wrap';
     var table = document.createElement('table'); table.className='tbl';
-    table.innerHTML='<thead><tr><th>Year</th><th>Era</th><th>Title</th><th>Description</th><th>Submitted By</th><th>Date</th><th>Actions</th></tr></thead>';
+    table.innerHTML='<thead><tr><th>Year</th><th>Era</th><th>Title</th><th>Submitted By</th><th>Date</th><th>Actions</th></tr></thead>';
     var tbody = document.createElement('tbody');
 
     events.forEach(function(ev){
@@ -803,25 +824,29 @@ async function renderTimelineAdmin(){
       var tdE=document.createElement('td'); tdE.innerHTML='<span class="badge">'+(ERA[ev.era]||ev.era)+'</span>'; tr.appendChild(tdE);
       // Title
       var tdT=document.createElement('td'); tdT.style.cssText='color:var(--cream);max-width:200px'; tdT.textContent=ev.title; tr.appendChild(tdT);
-      // Desc
-      var tdD=document.createElement('td'); tdD.style.cssText='max-width:220px;font-size:.75rem'; tdD.textContent=desc; tr.appendChild(tdD);
       // Author
       var tdA=document.createElement('td'); tdA.textContent=ev.author_name; tr.appendChild(tdA);
       // Date
       var tdDt=document.createElement('td'); tdDt.style.fontSize='.7rem'; tdDt.textContent=d; tr.appendChild(tdDt);
       // Actions
-      var tdAc=document.createElement('td'); tdAc.style.cssText='display:flex;gap:5px;align-items:center';
+      var tdAc=document.createElement('td'); tdAc.style.cssText='white-space:nowrap;vertical-align:middle';
+      var viewBtn=document.createElement('button');
+      viewBtn.textContent='View';
+      viewBtn.style.cssText='background:none;border:1px solid rgba(184,150,62,.4);color:var(--gold);padding:4px 10px;font-family:"Jost",sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-right:5px';
+      (function(evCopy,pending){viewBtn.addEventListener('click',function(){openTlDetail(evCopy,pending);});})(ev,tlTabMode==='pending');
+      tdAc.appendChild(viewBtn);
       if(tlTabMode==='pending'){
         var appBtn=document.createElement('button');
-        appBtn.textContent='✓ Approve';
-        appBtn.style.cssText='background:none;border:1px solid rgba(61,107,79,.4);color:#6b9e75;padding:3px 10px;font-family:"Jost",sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer';
-        appBtn.addEventListener('click',function(){approveEvent(ev.id);});
+        appBtn.textContent='Approve';
+        appBtn.title='Approve this event';
+        appBtn.style.cssText='background:none;border:1px solid rgba(61,107,79,.4);color:#6b9e75;padding:4px 9px;font-family:"Jost",sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-right:5px';
+        (function(id){appBtn.addEventListener('click',function(){approveEvent(id);});})(ev.id);
         tdAc.appendChild(appBtn);
       } else {
-        var live=document.createElement('span'); live.style.cssText='font-size:.62rem;color:#6b9e75'; live.textContent='✓ Live'; tdAc.appendChild(live);
+        var live=document.createElement('span'); live.style.cssText='font-size:.62rem;color:#6b9e75;margin-right:6px'; live.textContent='Live'; tdAc.appendChild(live);
       }
-      var delBtn=document.createElement('button'); delBtn.className='btn-del'; delBtn.textContent='✕';
-      delBtn.addEventListener('click',function(){deleteEvent(ev.id);});
+      var delBtn=document.createElement('button'); delBtn.className='btn-del'; delBtn.textContent='X';
+      (function(id){delBtn.addEventListener('click',function(){deleteEvent(id);});})(ev.id);
       tdAc.appendChild(delBtn);
       tr.appendChild(tdAc);
 
@@ -835,6 +860,36 @@ async function renderTimelineAdmin(){
   }catch(e){
     el.innerHTML='<div class="empty-state" style="color:#c47070">Error: '+e.message+'</div>';
   }
+}
+
+function openTlDetail(ev, isPending){
+  var ERA = {ancient:'Ancient',classical:'Classical',medieval:'Medieval','early-modern':'Early Modern',modern:'Modern'};
+  function fmtY(y){return y<0?Math.abs(y)+' BC':y+' AD';}
+  document.getElementById('tlDetailEra').textContent = ERA[ev.era]||ev.era||'';
+  document.getElementById('tlDetailTitle').textContent = ev.title||'';
+  document.getElementById('tlDetailYear').textContent = fmtY(ev.year);
+  document.getElementById('tlDetailDesc').textContent = ev.description||'(No description provided)';
+  document.getElementById('tlDetailAuthor').textContent = ev.author_name||'Unknown';
+  document.getElementById('tlDetailDate').textContent = new Date(ev.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var actEl = document.getElementById('tlDetailActions');
+  actEl.innerHTML = '';
+  if(isPending){
+    var appBtn = document.createElement('button');
+    appBtn.className = 'tl-btn-approve';
+    appBtn.textContent = '\u2713 Approve Event';
+    appBtn.addEventListener('click', function(){ approveEvent(ev.id); closeTlDetail(); });
+    actEl.appendChild(appBtn);
+  }
+  var delBtn = document.createElement('button');
+  delBtn.className = 'tl-btn-delete';
+  delBtn.textContent = '\u2715 Delete Event';
+  delBtn.addEventListener('click', function(){ deleteEvent(ev.id); closeTlDetail(); });
+  actEl.appendChild(delBtn);
+  document.getElementById('tlDetailOverlay').classList.add('open');
+}
+
+function closeTlDetail(){
+  document.getElementById('tlDetailOverlay').classList.remove('open');
 }
 
 async function approveEvent(id){
@@ -1311,5 +1366,20 @@ async function deleteArticle(id, imageUrl){
 /* ── INIT ── */
 if(isAdmin()){showDashboard()}else{document.getElementById('loginScreen').style.display='flex'}
 </script>
+<!-- TIMELINE DETAIL MODAL -->
+<div class="tl-detail-overlay" id="tlDetailOverlay" onclick="if(event.target===this)closeTlDetail()">
+  <div class="tl-detail-box">
+    <button class="tl-detail-close" onclick="closeTlDetail()">&#x2715;</button>
+    <div class="tl-detail-era" id="tlDetailEra"></div>
+    <div class="tl-detail-title" id="tlDetailTitle"></div>
+    <div class="tl-detail-year" id="tlDetailYear"></div>
+    <div class="tl-detail-desc" id="tlDetailDesc"></div>
+    <div class="tl-detail-meta">
+      <span><em>Submitted by</em><strong id="tlDetailAuthor"></strong></span>
+      <span><em>Submitted on</em><strong id="tlDetailDate"></strong></span>
+    </div>
+    <div class="tl-detail-actions" id="tlDetailActions"></div>
+  </div>
+</div>
 </body>
 </html>
