@@ -92,6 +92,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .post-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
 .post-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:.72rem;font-weight:600;flex-shrink:0}
 .post-author .name{font-size:.86rem;color:var(--bark);font-weight:500}
+.flame-badge{font-size:.85rem;margin-left:4px;cursor:default;display:inline-block;line-height:1}
+.flame-badge[title]{cursor:help}
+.nav-flame{font-size:.9rem;margin-left:5px}
 .post-author .meta{font-size:.68rem;color:var(--muted);margin-top:2px}
 .post-content{font-size:.88rem;color:var(--bark);line-height:1.8;font-weight:300}
 .post-files{margin-top:14px;padding-top:14px;border-top:1px solid rgba(184,150,62,.1)}
@@ -162,7 +165,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
   <div class="nav-right">
     <div class="nav-user" id="navUser" style="display:none">
       <div class="nav-avatar" id="navAvatar"></div>
-      <span id="navName" style="font-size:.82rem;color:var(--bark)"></span>
+      <span id="navName" style="font-size:.82rem;color:var(--bark)"></span><span id="navFlame" class="nav-flame" title="Top Contributor"></span>
     </div>
     <a href="index.html" class="nav-link">Home</a>
     <button class="btn-nav" id="btnNavLogout" style="display:none">Sign Out</button>
@@ -289,6 +292,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 <script>
 var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 var currentUser = null;
+var topContributorIds = new Set(); // IDs of top 10 contributors
+
+function flameFor(authorId){
+  return topContributorIds.has(authorId)
+    ? '<span class="flame-badge" title="Top Contributor">&#x1F525;</span>'
+    : '';
+}
 var currentCat = 'all';
 var currentFilter = 'all';
 var currentThread = null;
@@ -399,11 +409,35 @@ async function showForum(){
   document.getElementById('navAvatar').textContent=initials(nm);
   document.getElementById('navAvatar').style.background=avatarColor(currentUser.id);
   document.getElementById('navName').textContent=nm;
+  // Add flame to nav if current user is a top contributor
+  var navFlame = document.getElementById('navFlame');
+  if(navFlame) navFlame.textContent = topContributorIds.has(currentUser.id) ? '\uD83D\uDD25' : '';
   document.getElementById('sbName').textContent=nm;
   document.getElementById('sbSince').textContent='Member since '+new Date(currentUser.joined_at).toLocaleDateString('en-US',{month:'short',year:'numeric'});
   await loadSidebar();
+  await fetchTopContributors();
   await renderThreads();
   updateNewBtn();
+}
+
+
+/* ── TOP CONTRIBUTORS ── */
+async function fetchTopContributors(){
+  try{
+    // Count threads per author
+    var tRes = await sb.from('threads').select('author_id');
+    var pRes = await sb.from('posts').select('author_id');
+    var counts = {};
+    (tRes.data||[]).forEach(function(r){
+      if(r.author_id) counts[r.author_id] = (counts[r.author_id]||0) + 1;
+    });
+    (pRes.data||[]).forEach(function(r){
+      if(r.author_id) counts[r.author_id] = (counts[r.author_id]||0) + 1;
+    });
+    // Sort and take top 10
+    var sorted = Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; }).slice(0,10);
+    topContributorIds = new Set(sorted);
+  }catch(e){ topContributorIds = new Set(); }
 }
 
 /* ── SIDEBAR ── */
@@ -537,7 +571,7 @@ async function renderThreads(){
           '<div class="t-title">'+esc(t.title)+'</div>'+
           '<div class="t-excerpt">'+esc((t.body||'').substring(0,140))+'</div>'+
           '<div class="t-meta">'+
-            '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(t.author_name)+'</span>'+
+            '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(t.author_name)+flameFor(t.author_id)+'</span>'+
             '<span>'+ago(t.created_at)+'</span>'+
             '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'+(t.replies||0)+' replies</span>'+
             '<span style="display:flex;align-items:center;gap:3px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'+(t.views||0)+'</span>'+
@@ -619,7 +653,7 @@ function renderThreadView(t,posts,catMap){
       '<div class="post-header">'+
         '<div class="post-avatar" style="background:'+avatarColor(post.author_id)+'">'+initials(post.author_name)+'</div>'+
         '<div class="post-author">'+
-          '<div class="name">'+esc(post.author_name)+(post.isOp?' <span style="font-size:.55rem;padding:2px 6px;background:rgba(184,150,62,.12);color:var(--gold);margin-left:6px;letter-spacing:.1em;text-transform:uppercase">OP</span>':'')+'</div>'+
+          '<div class="name">'+esc(post.author_name)+flameFor(post.author_id)+(post.isOp?' <span style="font-size:.55rem;padding:2px 6px;background:rgba(184,150,62,.12);color:var(--gold);margin-left:6px;letter-spacing:.1em;text-transform:uppercase">OP</span>':'')+'</div>'+
           '<div class="meta">'+ago(post.created_at)+'</div>'+
         '</div>'+
       '</div>'+

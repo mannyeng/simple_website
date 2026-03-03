@@ -17,8 +17,10 @@ body{font-family:'Jost',sans-serif;background:var(--deep);color:var(--cream);ove
 
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:20px 60px;background:rgba(26,20,16,.95);backdrop-filter:blur(16px);border-bottom:1px solid rgba(184,150,62,.12)}
-.logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--cream);text-decoration:none}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--cream);text-decoration:none;display:flex;align-items:center;gap:10px}
 .logo span{color:var(--gold)}
+.logo-img{width:34px;height:34px;object-fit:contain;display:block;flex-shrink:0}
+.logo-placeholder{width:34px;height:34px;background:rgba(184,150,62,.15);border:1.5px dashed var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.45rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);font-family:'Jost',sans-serif;font-weight:500;text-align:center;line-height:1.3}
 .nav-links{display:flex;align-items:center;gap:24px}
 .nav-link{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s}
 .nav-link:hover{color:var(--gold)}
@@ -173,7 +175,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
 <body>
 
 <nav>
-  <a href="index.html" class="logo">Catechist's <span>Forum</span></a>
+  <a href="index.html" class="logo">
+    <!-- LOGO IMAGE: replace logo-placeholder div with: <img src="your-logo.png" class="logo-img" alt="Logo"> -->
+    <img src="logo.png" class="logo-img" alt="Logo">
+    Catechist's <span>Forum</span>
+  </a>
   <div class="nav-links">
     <a href="index.html" class="nav-link">&#8592; Home</a>
     <a href="forum.html" class="nav-link">Forum</a>

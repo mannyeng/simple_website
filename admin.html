@@ -169,13 +169,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           <input type="text" id="searchInput" placeholder="Search name, email, phone..." oninput="renderMembersTable()">
         </div>
-        <select class="filter-sel" id="filterMinistry" onchange="renderMembersTable()">
-          <option value="">All Ministries</option>
-          <option value="youth">Youth Ministry</option>
-          <option value="worship">Worship Team</option>
-          <option value="outreach">Outreach &amp; Service</option>
-          <option value="study">Bible Study</option>
-          <option value="general">General Member</option>
+        <select class="filter-sel" id="filterGrade" onchange="renderMembersTable()">
+          <option value="">All Grades</option>
+          <option value="volunteer">Volunteer</option>
+          <option value="principal">Principal / VP</option>
+          <option value="grade1">Grade 1</option>
+          <option value="grade2">Grade 2</option>
+          <option value="grade3">Grade 3</option>
+          <option value="grade4">Grade 4</option>
+          <option value="grade5">Grade 5</option>
+          <option value="grade6">Grade 6</option>
+          <option value="grade7">Grade 7</option>
+          <option value="grade8">Grade 8</option>
+          <option value="grade9">Grade 9</option>
+          <option value="grade10">Grade 10</option>
+          <option value="grade11">Grade 11</option>
+          <option value="grade12">Grade 12</option>
         </select>
         <select class="filter-sel" id="filterNews" onchange="renderMembersTable()">
           <option value="">All Members</option>
@@ -187,7 +196,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
       <div class="tbl-wrap"><table class="tbl"><thead><tr>
         <th onclick="sortMembers('id')">ID</th><th onclick="sortMembers('first_name')">Name</th>
         <th onclick="sortMembers('email')">Email</th><th onclick="sortMembers('phone')">Phone</th>
-        <th onclick="sortMembers('ministry')">Ministry</th><th>Newsletter</th>
+        <th onclick="sortMembers('grade')">Grade</th><th>Newsletter</th>
         <th onclick="sortMembers('joined_at')">Joined</th><th></th>
       </tr></thead><tbody id="membersBody"></tbody></table></div>
       <div class="pag" id="pagination"></div>
@@ -386,6 +395,7 @@ var PAGE_SIZE = 10;
 var catEditId = null;
 var CAT_COLORS = ['#b8963e','#3d6b4f','#6b4f3d','#4f6b8c','#8c4f6b','#6b3d8c','#8c6b3d','#3d8c6b'];
 var ML = {youth:'Youth Ministry',worship:'Worship Team',outreach:'Outreach & Service',study:'Bible Study',general:'General Member'};
+var GL = {volunteer:'Volunteer',principal:'Principal/VP',grade1:'Grade 1',grade2:'Grade 2',grade3:'Grade 3',grade4:'Grade 4',grade5:'Grade 5',grade6:'Grade 6',grade7:'Grade 7',grade8:'Grade 8',grade9:'Grade 9',grade10:'Grade 10',grade11:'Grade 11',grade12:'Grade 12'};
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
@@ -491,25 +501,24 @@ function renderStats(){
   var todayN=allMembers.filter(function(m){return new Date(m.joined_at).toDateString()===today}).length;
   var newsN=allMembers.filter(function(m){return m.newsletter}).length;
   var thisWeek=allMembers.filter(function(m){return Date.now()-new Date(m.joined_at).getTime()<7*24*60*60*1000}).length;
-  var mCount={};allMembers.forEach(function(m){mCount[m.ministry]=(mCount[m.ministry]||0)+1});
-  var topM='—',topC=0;for(var k in mCount){if(mCount[k]>topC){topC=mCount[k];topM=ML[k]||k}}
+  var uniqueParishes = new Set(allMembers.map(function(m){ return m.parish_name; }).filter(Boolean)).size;
   document.getElementById('statGrid').innerHTML=
     '<div class="stat-card"><span class="s-num">'+allMembers.length+'</span><span class="s-lbl">Total Members</span><span class="s-sub">+'+thisWeek+' this week</span></div>'+
     '<div class="stat-card"><span class="s-num">'+todayN+'</span><span class="s-lbl">Joined Today</span><span class="s-sub">New registrations</span></div>'+
     '<div class="stat-card"><span class="s-num">'+newsN+'</span><span class="s-lbl">Newsletter</span><span class="s-sub">'+(allMembers.length?Math.round(newsN/allMembers.length*100):0)+'% of members</span></div>'+
-    '<div class="stat-card"><span class="s-num" style="font-size:1.4rem">'+topM+'</span><span class="s-lbl">Top Ministry</span><span class="s-sub">'+topC+' members</span></div>';
+    '<div class="stat-card"><span class="s-num">'+uniqueParishes+'</span><span class="s-lbl">Unique Parishes</span><span class="s-sub">Across all members</span></div>';
 }
 
 /* ── MEMBERS TABLE ── */
 function getFilteredMembers(){
   var search=(document.getElementById('searchInput').value||'').toLowerCase().trim();
-  var ministry=document.getElementById('filterMinistry').value;
+  var grade=document.getElementById('filterGrade').value;
   var news=document.getElementById('filterNews').value;
   return allMembers.filter(function(m){
     var ms=!search||((m.first_name+' '+m.last_name).toLowerCase().includes(search)||m.email.toLowerCase().includes(search)||(m.phone||'').includes(search)||m.id.toLowerCase().includes(search));
-    var mm=!ministry||m.ministry===ministry;
+    var mg=!grade||m.grade===grade;
     var mn=!news||(news==='yes'&&m.newsletter)||(news==='no'&&!m.newsletter);
-    return ms&&mm&&mn;
+    return ms&&mg&&mn;
   });
 }
 
@@ -537,7 +546,7 @@ function renderMembersTable(){
       '<td style="color:var(--cream);font-weight:400">'+esc(m.first_name+' '+m.last_name)+'</td>'+
       '<td>'+esc(m.email)+'</td>'+
       '<td>'+(m.phone?esc(m.phone):'&mdash;')+'</td>'+
-      '<td><span class="badge">'+(ML[m.ministry]||'General')+'</span></td>'+
+      '<td><span class="badge">'+(GL[m.grade]||'—')+'</span></td>'+
       '<td>'+(m.newsletter?'<span style="color:#6b9e75">&#10003; Yes</span>':'<span style="color:var(--stone)">No</span>')+'</td>'+
       '<td>'+d+'</td>'+
       '<td><button class="btn-del" onclick="deleteMember(\''+m.id+'\')">&#x2715;</button></td>'+
