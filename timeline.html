@@ -124,12 +124,30 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
 .btn-login-submit:hover{background:var(--gold-light)}
 .btn-login-submit:disabled{opacity:.6;cursor:not-allowed}
 
-/* DETAIL MODAL */
+/* DETAIL MODAL — FIX 1: explicit bright color for title */
 .detail-box{max-width:600px;width:100%}
 .d-era{font-size:.56rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-.d-title{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--cream);line-height:1.15;margin-bottom:8px}
+.d-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:2.2rem;
+  font-weight:300;
+  color:#fdfaf5; /* FIX: use warm-white explicitly — fully light, high contrast on dark modal bg */
+  line-height:1.15;
+  margin-bottom:8px;
+}
 .d-year{font-size:.7rem;letter-spacing:.18em;color:var(--gold-light);margin-bottom:24px}
-.d-img{width:100%;max-height:320px;object-fit:cover;border-radius:3px;margin-bottom:20px;display:none}
+
+/* FIX 2: remove inline display:none from CSS so JS can control it cleanly */
+.d-img{
+  width:100%;
+  max-height:320px;
+  object-fit:cover;
+  border-radius:3px;
+  margin-bottom:20px;
+  display:none; /* hidden by default; JS sets display:block when image_url exists */
+}
+.d-img.visible{display:block;}
+
 .d-desc{font-size:.88rem;color:var(--stone);line-height:1.95;font-weight:300;white-space:pre-wrap;margin-bottom:24px}
 .ev-img-upload{margin-top:4px}
 .ev-img-drop{border:1.5px dashed rgba(184,150,62,.35);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative}
@@ -245,7 +263,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
     <div class="d-era" id="dEra"></div>
     <div class="d-title" id="dTitle"></div>
     <div class="d-year" id="dYear"></div>
-    <img class="d-img" id="dImg" src="" alt="" style="display:none">
+    <img class="d-img" id="dImg" src="" alt="">
     <div class="d-desc" id="dDesc"></div>
     <div class="d-meta">
       <div class="d-av" id="dAv"></div>
@@ -470,7 +488,15 @@ function openDetail(ev){
   document.getElementById('dYear').textContent=fmtYear(ev.year);
   document.getElementById('dDesc').textContent=ev.description;
   var dImg=document.getElementById('dImg');
-  if(ev.image_url){dImg.src=ev.image_url;dImg.style.display='block';}else{dImg.src='';dImg.style.display='none';}
+  dImg.classList.remove('visible');
+  dImg.src='';
+  if(ev.image_url){
+    dImg.alt=ev.title;
+    dImg.src=ev.image_url;
+    // Show once loaded (handles CORS / slow loads gracefully)
+    dImg.onload=function(){dImg.classList.add('visible');};
+    dImg.onerror=function(){dImg.classList.remove('visible');};
+  }
   var av=document.getElementById('dAv');
   av.textContent=initials(ev.author_name);
   av.style.background=avatarColor(ev.author_id);

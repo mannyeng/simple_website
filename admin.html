@@ -123,12 +123,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .tl-detail-box{background:var(--card);border:1px solid rgba(184,150,62,.2);max-width:640px;width:100%;position:relative;padding:44px 44px 36px;margin:auto}
 .tl-detail-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),rgba(184,150,62,.8),transparent)}
 .tl-detail-close{position:absolute;top:14px;right:18px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;font-family:'Jost',sans-serif;padding:4px 8px;transition:color .2s}
-.tl-detail-close:hover{color:var(--text)}
+.tl-detail-close:hover{color:var(--cream)}
 .tl-detail-era{font-size:.56rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-.tl-detail-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--text);line-height:1.2;margin-bottom:6px}
+.tl-detail-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color: #fdfaf5;line-height:1.2;margin-bottom:6px}
 .tl-detail-year{font-size:.68rem;letter-spacing:.18em;color:var(--gold);margin-bottom:22px;opacity:.8}
 .tl-detail-desc{font-size:.87rem;color:var(--muted);line-height:1.9;white-space:pre-wrap;margin-bottom:28px;padding:18px 20px;background:rgba(184,150,62,.04);border-left:2px solid rgba(184,150,62,.2)}
-.tl-detail-meta{display:flex;gap:32px;margin-bottom:28px;padding-top:18px;border-top:1px solid rgba(184,150,62,.12)}
+.tl-detail-meta{display:flex;gap:32px;margin-bottom:28px;padding-top:18px;border-top:1px solid rgba(184,150,62,.12);color: #fdfaf5;}
 .tl-detail-meta span{display:flex;flex-direction:column;gap:3px}
 .tl-detail-meta strong{font-size:.82rem;color:var(--text);font-weight:500;display:block}
 .tl-detail-meta em{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-style:normal}
@@ -869,6 +869,9 @@ function openTlDetail(ev, isPending){
   document.getElementById('tlDetailTitle').textContent = ev.title||'';
   document.getElementById('tlDetailYear').textContent = fmtY(ev.year);
   document.getElementById('tlDetailDesc').textContent = ev.description||'(No description provided)';
+  var tlImg = document.getElementById('tlDetailImg');
+  if(ev.image_url){ tlImg.src = ev.image_url; tlImg.style.display = 'block'; }
+  else { tlImg.src = ''; tlImg.style.display = 'none'; }
   document.getElementById('tlDetailAuthor').textContent = ev.author_name||'Unknown';
   document.getElementById('tlDetailDate').textContent = new Date(ev.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   var actEl = document.getElementById('tlDetailActions');
@@ -1373,6 +1376,7 @@ if(isAdmin()){showDashboard()}else{document.getElementById('loginScreen').style.
     <div class="tl-detail-era" id="tlDetailEra"></div>
     <div class="tl-detail-title" id="tlDetailTitle"></div>
     <div class="tl-detail-year" id="tlDetailYear"></div>
+    <img id="tlDetailImg" src="" alt="" style="display:none;width:100%;max-height:280px;object-fit:cover;border-radius:3px;margin-bottom:20px;border:1px solid rgba(184,150,62,.15)">
     <div class="tl-detail-desc" id="tlDetailDesc"></div>
     <div class="tl-detail-meta">
       <span><em>Submitted by</em><strong id="tlDetailAuthor"></strong></span>
