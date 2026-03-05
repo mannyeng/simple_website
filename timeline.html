@@ -59,48 +59,149 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
 .tl-state h3{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--muted);font-weight:300}
 
 /* SCROLL CONTAINER */
-.tl-scroll{overflow-x:auto;overflow-y:visible;cursor:grab;padding:0 80px;scrollbar-width:thin;scrollbar-color:rgba(184,150,62,.3) transparent}
+.tl-scroll{overflow-x:auto;overflow-y:visible;cursor:grab;padding:0 60px;scrollbar-width:thin;scrollbar-color:rgba(184,150,62,.3) transparent}
 .tl-scroll:active{cursor:grabbing}
 .tl-scroll::-webkit-scrollbar{height:4px}
 .tl-scroll::-webkit-scrollbar-thumb{background:rgba(184,150,62,.25);border-radius:2px}
 
 /* TRACK */
-.tl-track{display:inline-flex;align-items:center;position:relative;min-height:540px;padding:20px 0}
+.tl-track{position:relative;height:680px}
 
 /* SPINE */
-.spine{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(184,150,62,.2);transform:translateY(-50%);pointer-events:none;z-index:0}
-.spine-glow{position:absolute;left:0;right:0;top:50%;height:24px;transform:translateY(-50%);background:linear-gradient(to right,transparent,rgba(184,150,62,.04) 10%,rgba(184,150,62,.08),rgba(184,150,62,.04) 90%,transparent);filter:blur(6px);pointer-events:none}
+.spine{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(184,150,62,.22);transform:translateY(-50%);pointer-events:none;z-index:0}
+.spine-glow{position:absolute;left:0;right:0;top:50%;height:28px;transform:translateY(-50%);background:linear-gradient(to right,transparent,rgba(184,150,62,.04) 10%,rgba(184,150,62,.08),rgba(184,150,62,.04) 90%,transparent);filter:blur(8px);pointer-events:none}
 
-/* COLUMNS */
-.tl-col{display:flex;flex-direction:column;align-items:center;width:220px;flex-shrink:0;position:relative}
+/* GAP / BREAK INDICATOR — compressed empty period on spine */
+.gap-marker{position:absolute;top:50%;transform:translateY(-50%);pointer-events:none;z-index:1;display:flex;align-items:center}
+.gap-line{height:1px;background:rgba(184,150,62,.12)}
+.gap-zigzag{display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 5px;flex-shrink:0}
+.gap-zigzag span{display:block;width:10px;height:1px;background:rgba(184,150,62,.3);transform:skewX(-25deg)}
+.gap-label{font-size:.42rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(184,150,62,.35);white-space:nowrap;font-family:"Jost",sans-serif;padding:0 4px}
 
-/* ITEMS — alternate above/below */
-.tl-item{width:200px;cursor:pointer;display:flex;flex-direction:column;align-items:center}
-.tl-item.above{justify-content:flex-end;padding-bottom:6px}
-.tl-item.below{justify-content:flex-start;padding-top:6px}
+/* ── SINGLE EVENT ──
+   Architecture: dot is absolutely placed ON the spine (top:50%).
+   Connector is absolutely placed, growing up or down from dot to card.
+   Card is absolutely placed at its level above/below spine.
+   All three are independent — no flex stacking. ── */
 
-/* CARD */
-.ev-card{width:200px;background:rgba(255,255,255,.03);border:1px solid rgba(184,150,62,.14);padding:16px;transition:all .22s;position:relative;overflow:hidden}
-.ev-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-light));opacity:0;transition:opacity .22s}
-.tl-item:hover .ev-card{background:rgba(184,150,62,.07);border-color:rgba(184,150,62,.4);transform:translateY(-3px)}
+/* Wrapper: anchor at spine x position */
+.tl-item{position:absolute;top:50%;cursor:pointer;z-index:5}
+
+/* dot: centred on left:10px axis (same axis as connector & card left edge) */
+.tl-dot{position:absolute;left:10px;top:0;transform:translate(-50%,-50%);
+  width:10px;height:10px;border-radius:50%;background:var(--gold);
+  border:2px solid var(--deep);box-shadow:0 0 0 3px rgba(184,150,62,.18);
+  z-index:4;transition:transform .2s,box-shadow .2s}
+.tl-item:hover .tl-dot{transform:translate(-50%,-50%) scale(1.4);
+  box-shadow:0 0 0 6px rgba(184,150,62,.2),0 0 14px rgba(184,150,62,.35)}
+
+/* connector: same left:10px axis as dot and card left border.
+   Height = cardDist so it spans exactly from dot to card border.
+   z-index:1 — behind card so it doesn't overlap text at all. */
+.connector{position:absolute;left:10px;transform:translateX(-50%);
+  width:1px;z-index:1;transition:background .2s}
+.tl-item.above .connector{
+  bottom:0;
+  background:linear-gradient(to bottom,rgba(184,150,62,.08),rgba(184,150,62,.45))}
+.tl-item.below .connector{
+  top:0;
+  background:linear-gradient(to top,rgba(184,150,62,.08),rgba(184,150,62,.45))}
+/* arrowhead at spine end */
+.tl-item.above .connector::after{content:"";position:absolute;bottom:-3px;left:50%;
+  transform:translateX(-50%);border-left:3px solid transparent;
+  border-right:3px solid transparent;border-top:4px solid rgba(184,150,62,.45)}
+.tl-item.below .connector::after{content:"";position:absolute;top:-3px;left:50%;
+  transform:translateX(-50%);border-left:3px solid transparent;
+  border-right:3px solid transparent;border-bottom:4px solid rgba(184,150,62,.45)}
+.tl-item:hover .connector{
+  background:linear-gradient(to bottom,rgba(184,150,62,.3),rgba(184,150,62,.8)) !important}
+
+/* card: left:10px so its left border sits exactly where connector ends.
+   padding-left:8px so text clears the left border cleanly. */
+.ev-card{position:absolute;left:10px;
+  width:150px;height:32px;
+  background:rgba(28,20,14,.95);border:1px solid rgba(184,150,62,.22);
+  padding:0 8px;z-index:2;
+  display:flex;align-items:center;
+  transition:background .2s,border-color .2s;
+  backdrop-filter:blur(4px);overflow:hidden}
+.ev-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-light));opacity:0;transition:opacity .2s}
+.tl-item:hover .ev-card{background:rgba(184,150,62,.12);border-color:rgba(184,150,62,.55)}
 .tl-item:hover .ev-card::before{opacity:1}
-.card-era{font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;opacity:.8}
-.card-title{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--cream);line-height:1.3;margin-bottom:6px}
-.card-desc{font-size:.7rem;color:var(--stone);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.card-author{display:flex;align-items:center;gap:6px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(184,150,62,.08);font-size:.6rem;color:var(--muted)}
-.card-av{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.45rem;font-weight:700;flex-shrink:0}
 
-/* CONNECTOR */
-.connector{width:1px;height:30px;flex-shrink:0}
-.tl-item.above .connector{background:linear-gradient(to bottom,rgba(184,150,62,.08),rgba(184,150,62,.6))}
-.tl-item.below .connector{background:linear-gradient(to top,rgba(184,150,62,.08),rgba(184,150,62,.6))}
+/* year label — centred on same left:10px axis as dot */
+.tl-yr{position:absolute;left:10px;transform:translateX(-50%);
+  font-size:.5rem;letter-spacing:.08em;
+  color:rgba(184,150,62,.65);font-weight:500;white-space:nowrap}
 
-/* DOT */
-.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid var(--deep);box-shadow:0 0 0 3px rgba(184,150,62,.2);flex-shrink:0;z-index:2;transition:all .22s}
-.tl-item:hover .tl-dot{transform:scale(1.5);box-shadow:0 0 0 6px rgba(184,150,62,.2),0 0 18px rgba(184,150,62,.35)}
+/* card title — single line, truncated */
+.card-title{font-family:"Cormorant Garamond",serif;font-size:.85rem;color:var(--cream);
+  line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.card-era,.card-desc,.card-author,.card-img,.card-av{display:none}
 
-/* YEAR */
-.tl-yr{font-size:.58rem;letter-spacing:.12em;color:var(--gold);font-weight:500;white-space:nowrap;margin:4px 0}
+/* ── RANGE EVENT — teal/steel-blue palette ── */
+/* colour tokens (range only) */
+:root{
+  --range:#4a9ead;
+  --range-light:#6bbdcc;
+  --range-dim:rgba(74,158,173,.18);
+  --range-mid:rgba(74,158,173,.28);
+}
+.range-item{position:absolute;top:50%;transform:translateY(-50%);cursor:pointer;z-index:4}
+/* filled band */
+.range-band{position:absolute;top:50%;left:0;right:0;height:34px;transform:translateY(-50%);
+  background:linear-gradient(90deg,rgba(74,158,173,.06),rgba(74,158,173,.14),rgba(74,158,173,.06));
+  border:1px solid rgba(74,158,173,.3);border-radius:4px;transition:all .22s;z-index:1}
+.range-item:hover .range-band{
+  background:linear-gradient(90deg,rgba(74,158,173,.14),rgba(74,158,173,.24),rgba(74,158,173,.14));
+  border-color:rgba(74,158,173,.65);height:38px}
+/* centre spine bar */
+.range-bar{position:absolute;top:50%;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--range),var(--range-light),var(--range));
+  transform:translateY(-50%);border-radius:1px;opacity:.75;z-index:2}
+/* start / end dots */
+.range-dot-s,.range-dot-e{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;
+  background:var(--range);border:2px solid var(--deep);
+  box-shadow:0 0 0 3px rgba(74,158,173,.22);z-index:3}
+.range-dot-s{left:0;transform:translate(-50%,-50%)}
+.range-dot-e{right:0;transform:translate(50%,-50%)}
+/* year labels — below the band, clear of title above */
+.range-yr-s,.range-yr-e{position:absolute;font-size:.54rem;letter-spacing:.08em;
+  color:rgba(74,158,173,.9);font-weight:500;white-space:nowrap;top:calc(50% + 28px);z-index:3}
+.range-yr-s{left:0;transform:translateX(-50%)}
+.range-yr-e{right:0;transform:translateX(50%)}
+/* card wrap & connector */
+.range-card-wrap{position:absolute;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;z-index:6;pointer-events:none}
+.range-card-wrap.above{bottom:calc(50% + 18px)}
+.range-card-wrap.below{top:calc(50% + 18px)}
+.range-connector{width:1px;height:14px}
+.range-card-wrap.above .range-connector{background:linear-gradient(to top,rgba(74,158,173,.12),rgba(74,158,173,.5))}
+.range-card-wrap.below .range-connector{background:linear-gradient(to bottom,rgba(74,158,173,.12),rgba(74,158,173,.5))}
+/* range band — no title inside, just the coloured box */
+.range-band{position:absolute;top:50%;left:0;right:0;height:42px;
+  transform:translateY(-50%);
+  background:linear-gradient(90deg,rgba(74,158,173,.07),rgba(74,158,173,.14),rgba(74,158,173,.07));
+  border:1px solid rgba(74,158,173,.28);border-radius:4px;
+  transition:all .22s;z-index:1;overflow:visible}
+.range-item:hover .range-band{
+  background:linear-gradient(90deg,rgba(74,158,173,.14),rgba(74,158,173,.24),rgba(74,158,173,.14));
+  border-color:rgba(74,158,173,.6);height:46px}
+/* title floats ABOVE the band, centred, so it never overlaps year labels below */
+.range-band-title{position:absolute;left:50%;bottom:calc(100% + 6px);
+  transform:translateX(-50%);
+  font-family:"Cormorant Garamond",serif;font-size:1.1rem;
+  color:rgba(168,220,230,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:calc(100% - 16px);pointer-events:none;user-select:none;
+  text-align:center;line-height:1;transition:color .22s}
+.range-item:hover .range-band-title{color:rgba(168,220,230,1)}
+/* hide the old floating range-card-wrap entirely */
+.range-card-wrap{display:none}
+/* keep range-bar behind title */
+.range-bar{position:absolute;top:50%;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--range),var(--range-light),var(--range));
+  transform:translateY(-50%);opacity:0.35;z-index:0}
 
 /* MODALS */
 .overlay{position:fixed;inset:0;background:rgba(26,20,16,.92);z-index:400;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px)}
@@ -124,7 +225,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
 .btn-login-submit:hover{background:var(--gold-light)}
 .btn-login-submit:disabled{opacity:.6;cursor:not-allowed}
 
-/* DETAIL MODAL — FIX 1: explicit bright color for title */
+/* DETAIL MODAL */
 .detail-box{max-width:600px;width:100%}
 .d-era{font-size:.56rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
 .d-title{
@@ -136,18 +237,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
   margin-bottom:8px;
 }
 .d-year{font-size:.7rem;letter-spacing:.18em;color:var(--gold-light);margin-bottom:24px}
-
-/* FIX 2: remove inline display:none from CSS so JS can control it cleanly */
-.d-img{
-  width:100%;
-  max-height:320px;
-  object-fit:cover;
-  border-radius:3px;
-  margin-bottom:20px;
-  display:none; /* hidden by default; JS sets display:block when image_url exists */
-}
-.d-img.visible{display:block;}
-
+.d-img{width:100%;max-height:320px;object-fit:cover;border-radius:3px;margin-bottom:20px;display:none}
 .d-desc{font-size:.88rem;color:var(--stone);line-height:1.95;font-weight:300;white-space:pre-wrap;margin-bottom:24px}
 .ev-img-upload{margin-top:4px}
 .ev-img-drop{border:1.5px dashed rgba(184,150,62,.35);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative}
@@ -263,7 +353,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
     <div class="d-era" id="dEra"></div>
     <div class="d-title" id="dTitle"></div>
     <div class="d-year" id="dYear"></div>
-    <img class="d-img" id="dImg" src="" alt="">
+    <img class="d-img" id="dImg" src="" alt="" style="display:none">
     <div class="d-desc" id="dDesc"></div>
     <div class="d-meta">
       <div class="d-av" id="dAv"></div>
@@ -284,20 +374,25 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
       <div class="form-err" id="formErr"></div>
       <div class="form-row">
         <div class="fg">
-          <label>Year * (−4000 to 2026)</label>
+          <label>Start Year * (−4000 to 2026)</label>
           <input type="number" id="evYear" min="-4000" max="2026" placeholder="e.g. −44 or 1517">
           <div class="fg-hint" id="eraHint"></div>
         </div>
         <div class="fg">
-          <label>Era</label>
-          <select id="evEra">
-            <option value="ancient">Ancient (4000–500 BC)</option>
-            <option value="classical">Classical (500 BC–500 AD)</option>
-            <option value="medieval">Medieval (500–1500)</option>
-            <option value="early-modern">Early Modern (1500–1800)</option>
-            <option value="modern" selected>Modern (1800–2026)</option>
-          </select>
+          <label>End Year <span style="font-size:.58rem;opacity:.55;font-weight:300">(optional — for ranges)</span></label>
+          <input type="number" id="evYearEnd" min="-4000" max="2026" placeholder="e.g. 1648 (leave blank for single year)">
+          <div class="fg-hint" id="yearEndHint"></div>
         </div>
+      </div>
+      <div class="fg">
+        <label>Era</label>
+        <select id="evEra">
+          <option value="ancient">Ancient (4000–500 BC)</option>
+          <option value="classical">Classical (500 BC–500 AD)</option>
+          <option value="medieval">Medieval (500–1500)</option>
+          <option value="early-modern">Early Modern (1500–1800)</option>
+          <option value="modern" selected>Modern (1800–2026)</option>
+        </select>
       </div>
       <div class="fg">
         <label>Event Title *</label>
@@ -328,7 +423,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       <h4>Submitted!</h4>
       <p>Your event is pending admin review. Once approved it will appear on the timeline.</p>
-      <button class="btn-go" style="width:100%;max-width:220px" onclick="closeSubmit()">Done</button>
+      <button class="btn-go" style="width:100%;max-width:220px" onclick="document.getElementById('okState').style.display='none';document.getElementById('okState').classList.remove('show');closeSubmit()">Done</button>
     </div>
   </div>
 </div>
@@ -366,6 +461,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function avatarColor(id){return COLORS[String(id||'x').charCodeAt(String(id||'x').length-1)%COLORS.length]}
 function initials(n){return String(n||'?').split(' ').map(function(w){return w.charAt(0)}).join('').toUpperCase().slice(0,2)}
 function fmtYear(y){var n=parseInt(y);return n<0?Math.abs(n)+' BC':n+' AD'}
+function fmtRange(ev){return ev.year_end?fmtYear(ev.year)+' – '+fmtYear(ev.year_end):fmtYear(ev.year)}
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000)}
 function yearToEra(y){
   if(y<=-500)return'ancient';
@@ -408,54 +504,273 @@ async function loadEvents(){
 function render(){
   var events=currentEra==='all'?allEvents:allEvents.filter(function(e){return e.era===currentEra;});
   var outer=document.getElementById('tlOuter');
-
   if(!events.length){
     outer.innerHTML='<div class="tl-state"><h3>No events yet</h3><p>Be the first — click <strong style="color:var(--gold)">Add Event</strong> to contribute.</p></div>';
     return;
   }
 
-  var scroll=document.createElement('div');
-  scroll.className='tl-scroll';
-  var track=document.createElement('div');
-  track.className='tl-track';
+  /*
+   * SCALE STRATEGY
+   * --------------
+   * 1. Sort all events by year.
+   * 2. Group consecutive events that are "close together" into CLUSTERS.
+   *    (gap between neighbours <= CLUSTER_GAP years → same cluster)
+   * 3. Each cluster gets PX_PER_CLUSTER pixels of horizontal space,
+   *    and events within a cluster are spread evenly inside that space.
+   * 4. Between clusters, if the year-gap is large enough, insert a
+   *    compressed GAP_PX-wide break indicator showing the skipped period.
+   * 5. yearToPx() interpolates within clusters, snaps gaps.
+   *
+   * Result: dense periods expand naturally; empty centuries compress.
+   * No fixed era budgets. Adding an event to an empty era automatically
+   * splits or removes the break indicator for that zone.
+   */
 
-  // Spine
+  var PADDING        = 200;  // px at each end
+  var PX_PER_EVENT   = 280;  // px per event — cluster width = n * this → more breathing room
+  var MIN_CLUSTER_PX = 280;  // minimum cluster width for a single event
+  var GAP_PX         = 90;   // fixed px for compressed gap indicator
+  var CLUSTER_GAP    = 80;   // year-gap (yrs) that separates two clusters
+  var BREAK_MIN_YRS  = 30;   // only draw break indicator if gap >= this
+  var CARD_W         = 200;  // collision detection card width estimate
+
+  /* ── 1. collect & sort all anchor years ──────────────────────── */
+  var sorted = events.slice().sort(function(a,b){ return a.year - b.year; });
+
+  /* ── 2. cluster events ───────────────────────────────────────── */
+  var clusters = [];   // [{events:[], minY, maxY}]
+  sorted.forEach(function(ev){
+    var last = clusters[clusters.length-1];
+    if(!last || (ev.year - last.maxY) > CLUSTER_GAP){
+      clusters.push({events:[ev], minY:ev.year, maxY:ev.year_end||ev.year});
+    } else {
+      last.events.push(ev);
+      last.maxY = Math.max(last.maxY, ev.year_end||ev.year);
+    }
+  });
+
+  /* ── 3. assign pixel positions to clusters ───────────────────── */
+  // Each cluster gets max(PX_PER_CLUSTER, MIN_EVENT_GAP * eventCount) px.
+  // yearPx maps year → pixel x for every anchor year in a cluster.
+  var yearPx   = {};
+  var gapZones = [];  // {fromY, toY, x0, x1} — for break indicators
+  var cur      = PADDING;
+
+  clusters.forEach(function(cl, ci){
+    // gap before this cluster
+    if(ci > 0){
+      var prevCl  = clusters[ci-1];
+      var gapYrs  = cl.minY - prevCl.maxY;
+      var gapFrom = prevCl.maxY;
+      var gapTo   = cl.minY;
+      var x0      = cur;
+      if(gapYrs >= BREAK_MIN_YRS){
+        cur += GAP_PX;
+        gapZones.push({fromY:gapFrom, toY:gapTo, x0:x0, x1:cur});
+      }
+      // small gaps (< BREAK_MIN_YRS) just flow naturally — no indicator
+    }
+
+    // spread events within cluster — width scales with event count
+    var n       = cl.events.length;
+    var clPx    = Math.max(MIN_CLUSTER_PX, PX_PER_EVENT * n);
+    var clStart = cur;
+
+    if(n === 1){
+      yearPx[cl.events[0].year] = clStart + clPx/2;
+      if(cl.events[0].year_end){
+        // range end: place proportionally after start within cluster space
+        yearPx[cl.events[0].year_end] = clStart + clPx/2 + Math.min(60, clPx*0.4);
+      }
+    } else {
+      var span = cl.maxY - cl.minY || 1;
+      cl.events.forEach(function(ev){
+        var frac = (ev.year - cl.minY) / span;
+        yearPx[ev.year] = Math.round(clStart + frac * clPx);
+        if(ev.year_end){
+          var frac2 = (ev.year_end - cl.minY) / span;
+          yearPx[ev.year_end] = Math.round(clStart + frac2 * clPx);
+        }
+      });
+    }
+    cur = clStart + clPx;
+  });
+
+  var trackW = cur + PADDING;
+
+  /* ── 4. yearToPx with interpolation ─────────────────────────── */
+  var knownYears = Object.keys(yearPx).map(Number).sort(function(a,b){return a-b;});
+
+  function yearToPx(y){
+    if(yearPx[y] !== undefined) return yearPx[y];
+    // interpolate between nearest known years
+    for(var i=0;i<knownYears.length-1;i++){
+      var y0=knownYears[i], y1=knownYears[i+1];
+      if(y>=y0 && y<=y1){
+        var t=(y-y0)/(y1-y0);
+        return Math.round(yearPx[y0] + t*(yearPx[y1]-yearPx[y0]));
+      }
+    }
+    if(y < knownYears[0]) return yearPx[knownYears[0]] - (knownYears[0]-y)*2;
+    return yearPx[knownYears[knownYears.length-1]] + (y-knownYears[knownYears.length-1])*2;
+  }
+
+  /* ── 5. Pixel-rect collision system ─────────────────────────────
+   * Each placed card registers its bounding box: {x1,x2,y1,y2}.
+   * A new card at (cardX, cardY) on a given level is rejected if its
+   * rect intersects any existing rect on that level+side.
+   * We try level 0, 1, 2 … until we find a free slot.
+   * Card rect: x1=dotX+10, x2=dotX+10+CARD_W, height=CARD_H.
+   * For above: y2 = spineY - BASE_GAP - level*LVL_STEP
+   *            y1 = y2 - CARD_H
+   * For below: y1 = spineY + BASE_GAP + level*LVL_STEP
+   *            y2 = y1 + CARD_H
+   * spineY is 0 in item-local coords (items are positioned at top:50%).
+   */
+  var CARD_W2  = 160;  // actual card width  (left:10px + 150px card)
+  var CARD_H2  = 32;   // actual card height
+  var BASE_GAP2= 48;   // spine → card near-edge gap (px)
+  var LVL_STEP2= 56;   // additional px per level — enough to clear card + margin
+  var MARGIN_X = 8;    // horizontal breathing room between cards
+  var MARGIN_Y = 10;   // vertical breathing room between cards
+
+  // placed[side] = array of {x1,x2,y1,y2}
+  var placed = {above:[], below:[]};
+
+  function getLevel2(side, dotX){
+    var cardX1 = dotX + 10 - MARGIN_X;
+    var cardX2 = dotX + 10 + CARD_W2 + MARGIN_X;
+    for(var lvl=0; lvl<20; lvl++){
+      var dist = BASE_GAP2 + lvl * LVL_STEP2;
+      var y1, y2;
+      if(side==='above'){
+        y2 = -(dist)           + MARGIN_Y;
+        y1 = -(dist + CARD_H2) - MARGIN_Y;
+      } else {
+        y1 = dist              - MARGIN_Y;
+        y2 = dist + CARD_H2   + MARGIN_Y;
+      }
+      // check against all placed rects on this side
+      var clash = false;
+      for(var p=0; p<placed[side].length; p++){
+        var r = placed[side][p];
+        var xOverlap = cardX1 < r.x2 && cardX2 > r.x1;
+        var yOverlap = y1     < r.y2 && y2     > r.y1;
+        if(xOverlap && yOverlap){ clash=true; break; }
+      }
+      if(!clash){
+        // register this card
+        placed[side].push({x1:cardX1, x2:cardX2, y1:y1, y2:y2});
+        return lvl;
+      }
+    }
+    return 0; // fallback
+  }
+
+  /* ── build DOM ───────────────────────────────────────────────── */
+  var scroll=document.createElement('div'); scroll.className='tl-scroll';
+  var track=document.createElement('div');  track.className='tl-track';
+  track.style.width=trackW+'px';
+
   var sg=document.createElement('div');sg.className='spine-glow';track.appendChild(sg);
   var sp=document.createElement('div');sp.className='spine';track.appendChild(sp);
 
-  events.forEach(function(ev,i){
+  /* ── gap break indicators ────────────────────────────────────── */
+  gapZones.forEach(function(g){
+    var w   = g.x1 - g.x0;
+    var lbl = fmtYear(g.fromY) + ' \u2013 ' + fmtYear(g.toY);
+    var gm  = document.createElement('div');
+    gm.className='gap-marker';
+    gm.style.cssText='left:'+g.x0+'px;width:'+w+'px';
+    gm.innerHTML=
+      '<div class="gap-line" style="flex:1"></div>'+
+      '<div class="gap-zigzag"><span></span><span></span><span></span></div>'+
+      '<div class="gap-label">'+lbl+'</div>'+
+      '<div class="gap-zigzag"><span></span><span></span><span></span></div>'+
+      '<div class="gap-line" style="flex:1"></div>';
+    track.appendChild(gm);
+  });
+
+  /* ── render events (sorted chronologically so i%2 gives true alternation) */
+  var shownYears = [];
+  var sortedEvs  = events.slice().sort(function(a,b){ return a.year - b.year; });
+  sortedEvs.forEach(function(ev,i){
+    var isRange=!!(ev.year_end && ev.year_end>ev.year);
     var isAbove=i%2===0;
-    var col=document.createElement('div');
-    col.className='tl-col';
+    var xStart=yearToPx(ev.year);
 
-    var item=document.createElement('div');
-    item.className='tl-item '+(isAbove?'above':'below');
-    item.addEventListener('click',function(){openDetail(ev);});
+    var card=document.createElement('div');
+    card.className='ev-card'+(isRange?' range-card':'');
+    var titleEl=document.createElement('div');
+    titleEl.className='card-title';
+    titleEl.textContent=ev.title;
+    card.appendChild(titleEl);
 
-    // Card
-    var card=document.createElement('div');card.className='ev-card';
-    var eraEl=document.createElement('div');eraEl.className='card-era';eraEl.textContent=ERA_NAMES[ev.era]||ev.era;
-    var titleEl=document.createElement('div');titleEl.className='card-title';titleEl.textContent=ev.title;
-    var descEl=document.createElement('div');descEl.className='card-desc';descEl.textContent=ev.description;
-    var authRow=document.createElement('div');authRow.className='card-author';
-    var av=document.createElement('div');av.className='card-av';av.style.background=avatarColor(ev.author_id);av.textContent=initials(ev.author_name);
-    authRow.appendChild(av);
-    authRow.appendChild(document.createTextNode(ev.author_name));
-    card.appendChild(eraEl);card.appendChild(titleEl);card.appendChild(descEl);card.appendChild(authRow);
+    if(isRange){
+      var xEnd  =yearToPx(ev.year_end);
+      var spanPx=Math.max(60,xEnd-xStart);
+      var xMid  =xStart+spanPx/2;
+      var item=document.createElement('div');
+      item.className='range-item';
+      item.style.cssText='left:'+xStart+'px;width:'+spanPx+'px;height:100%';
+      item.addEventListener('click',function(){openDetail(ev);});
+      // band contains title directly
+      var band=document.createElement('div');band.className='range-band';
+      var bandTitle=document.createElement('div');bandTitle.className='range-band-title';
+      bandTitle.textContent=ev.title;
+      band.appendChild(bandTitle);
+      item.appendChild(band);
+      var bar=document.createElement('div');bar.className='range-bar';item.appendChild(bar);
+      var ds=document.createElement('div');ds.className='range-dot-s';item.appendChild(ds);
+      var de=document.createElement('div');de.className='range-dot-e';item.appendChild(de);
+      var ys=document.createElement('div');ys.className='range-yr-s';ys.textContent=fmtYear(ev.year);item.appendChild(ys);
+      var ye=document.createElement('div');ye.className='range-yr-e';ye.textContent=fmtYear(ev.year_end);item.appendChild(ye);
+      track.appendChild(item);
 
-    // Connector, dot, year
-    var conn=document.createElement('div');conn.className='connector';
-    var dot=document.createElement('div');dot.className='tl-dot';
-    var yr=document.createElement('div');yr.className='tl-yr';yr.textContent=fmtYear(ev.year);
-
-    if(isAbove){
-      item.appendChild(card);item.appendChild(conn);item.appendChild(dot);item.appendChild(yr);
     } else {
-      item.appendChild(yr);item.appendChild(dot);item.appendChild(conn);item.appendChild(card);
-    }
+      // ── SINGLE EVENT ─────────────────────────────────────────
+      var side     = isAbove ? 'above' : 'below';
+      var lvl      = getLevel2(side, xStart);
+      var cardDist = BASE_GAP2 + lvl * LVL_STEP2;
+      var connH    = cardDist;
 
-    col.appendChild(item);
-    track.appendChild(col);
+      var item = document.createElement('div');
+      item.className = 'tl-item ' + (isAbove ? 'above' : 'below');
+      item.style.left = xStart + 'px';
+      item.addEventListener('click', function(){ openDetail(ev); });
+
+      var dot  = document.createElement('div'); dot.className = 'tl-dot';
+      var conn = document.createElement('div'); conn.className = 'connector';
+      conn.style.height = connH + 'px';
+
+      // year label — skip if this year already labelled
+      var yr = null;
+      if(shownYears.indexOf(ev.year) < 0){
+        shownYears.push(ev.year);
+        yr = document.createElement('div'); yr.className = 'tl-yr';
+        yr.textContent = fmtYear(ev.year);
+      }
+
+      if(isAbove){
+        card.style.bottom = cardDist + 'px';
+        card.style.top    = 'auto';
+        conn.style.bottom = '0';
+        conn.style.top    = 'auto';
+        if(yr){ yr.style.top = '8px'; yr.style.bottom = 'auto'; }
+      } else {
+        card.style.top    = cardDist + 'px';
+        card.style.bottom = 'auto';
+        conn.style.top    = '0';
+        conn.style.bottom = 'auto';
+        if(yr){ yr.style.bottom = '8px'; yr.style.top = 'auto'; }
+      }
+
+      item.appendChild(dot);
+      item.appendChild(conn);
+      item.appendChild(card);
+      if(yr) item.appendChild(yr);
+      track.appendChild(item);
+    }
   });
 
   scroll.appendChild(track);
@@ -463,7 +778,6 @@ function render(){
   outer.appendChild(scroll);
   enableDrag(scroll);
 }
-
 /* DRAG SCROLL */
 function enableDrag(el){
   var down=false,sx=0,sl=0;
@@ -485,18 +799,10 @@ function setEra(era,btn){
 function openDetail(ev){
   document.getElementById('dEra').textContent=ERA_NAMES[ev.era]||ev.era;
   document.getElementById('dTitle').textContent=ev.title;
-  document.getElementById('dYear').textContent=fmtYear(ev.year);
+  document.getElementById('dYear').textContent=fmtRange(ev);
   document.getElementById('dDesc').textContent=ev.description;
   var dImg=document.getElementById('dImg');
-  dImg.classList.remove('visible');
-  dImg.src='';
-  if(ev.image_url){
-    dImg.alt=ev.title;
-    dImg.src=ev.image_url;
-    // Show once loaded (handles CORS / slow loads gracefully)
-    dImg.onload=function(){dImg.classList.add('visible');};
-    dImg.onerror=function(){dImg.classList.remove('visible');};
-  }
+  if(ev.image_url){dImg.src=ev.image_url;dImg.style.display='block';}else{dImg.src='';dImg.style.display='none';}
   var av=document.getElementById('dAv');
   av.textContent=initials(ev.author_name);
   av.style.background=avatarColor(ev.author_id);
@@ -524,12 +830,15 @@ document.getElementById('btnAdd').addEventListener('click',function(){
 
 function openSubmitForm(){
   document.getElementById('submitForm').style.display='block';
+  document.getElementById('okState').style.display='none';
   document.getElementById('okState').classList.remove('show');
   document.getElementById('formErr').classList.remove('show');
   document.getElementById('evYear').value='';
+  document.getElementById('evYearEnd').value='';
   document.getElementById('evTitle').value='';
   document.getElementById('evDesc').value='';
   document.getElementById('eraHint').textContent='';
+  document.getElementById('yearEndHint').textContent='';
   removeEvImg();
   document.getElementById('submitOverlay').classList.add('open');
 }
@@ -583,6 +892,17 @@ async function doTimelineLogin(){
   }
 }
 
+document.getElementById('evYearEnd').addEventListener('input',function(){
+  var yEnd=parseInt(this.value);
+  var yStart=parseInt(document.getElementById('evYear').value);
+  var hint=document.getElementById('yearEndHint');
+  if(this.value===''){ hint.textContent=''; return; }
+  if(!isNaN(yEnd)&&!isNaN(yStart)&&yEnd<=yStart){
+    hint.style.color='#c47070'; hint.textContent='End year must be after start year.';
+  } else if(!isNaN(yEnd)){
+    hint.style.color=''; hint.textContent='Range: '+fmtYear(yStart)+' – '+fmtYear(yEnd);
+  }
+});
 document.getElementById('evYear').addEventListener('input',function(){
   var y=parseInt(this.value);
   if(isNaN(y))return;
@@ -633,6 +953,7 @@ async function uploadEvImage(){
 
 async function submitEvent(){
   var year=document.getElementById('evYear').value;
+  var yearEnd=document.getElementById('evYearEnd').value;
   var era=document.getElementById('evEra').value;
   var title=document.getElementById('evTitle').value.trim();
   var desc=document.getElementById('evDesc').value.trim();
@@ -641,8 +962,12 @@ async function submitEvent(){
   errEl.classList.remove('show');
 
   var yInt=parseInt(year);
+  var yEndInt=yearEnd===''?null:parseInt(yearEnd);
   if(year===''||isNaN(yInt)||yInt<-4000||yInt>2026){
-    errEl.textContent='Enter a year between −4000 (4000 BC) and 2026 AD.';errEl.classList.add('show');return;
+    errEl.textContent='Enter a start year between −4000 (4000 BC) and 2026 AD.';errEl.classList.add('show');return;
+  }
+  if(yEndInt!==null&&(isNaN(yEndInt)||yEndInt<-4000||yEndInt>2026||yEndInt<=yInt)){
+    errEl.textContent='End year must be a valid year after the start year.';errEl.classList.add('show');return;
   }
   if(!title){errEl.textContent='Please enter an event title.';errEl.classList.add('show');return;}
   if(!desc){errEl.textContent='Please enter a description.';errEl.classList.add('show');return;}
@@ -652,7 +977,7 @@ async function submitEvent(){
     var imageUrl=await uploadEvImage();
     btn.textContent='Submitting…';
     var ev={
-      id:'EV-'+Date.now(),year:yInt,era:era,title:title,description:desc,
+      id:'EV-'+Date.now(),year:yInt,year_end:yEndInt,era:era,title:title,description:desc,
       image_url:imageUrl||null,
       author_id:currentUser.id,
       author_name:currentUser.first_name+' '+currentUser.last_name,
@@ -661,6 +986,7 @@ async function submitEvent(){
     var res=await sb.from('timeline_events').insert(ev);
     if(res.error) throw new Error(res.error.message);
     document.getElementById('submitForm').style.display='none';
+    document.getElementById('okState').style.display='block';
     document.getElementById('okState').classList.add('show');
     removeEvImg();
     loadPending();
