@@ -12,7 +12,9 @@
 :root{--cream:#f5f0e8;--warm-white:#fdfaf5;--gold:#b8963e;--gold-light:#d4b068;--deep:#1a1410;--bark:#3d2e1e;--stone:#8c7b68;--muted:#c4b49e;--error:#8b3a3a;--success:#3d6b4f}
 body{font-family:'Jost',sans-serif;background:var(--warm-white);min-height:100vh}
 nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(253,250,245,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(184,150,62,.15)}
-.logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--bark);text-decoration:none}.logo span{color:var(--gold)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--bark);text-decoration:none;display:flex;align-items:center;gap:10px}.logo span{color:var(--gold)}
+.logo-img{width:50px;height:50px;object-fit:contain;display:block;flex-shrink:0}
+.logo-placeholder{width:36px;height:36px;background:rgba(184,150,62,.15);border:1.5px dashed var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.45rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);font-family:'Jost',sans-serif;font-weight:500;text-align:center;line-height:1.3}
 .nav-right{display:flex;align-items:center;gap:20px}
 .nav-link{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--stone);text-decoration:none;transition:color .3s}.nav-link:hover{color:var(--gold)}
 .nav-user{font-size:.78rem;color:var(--bark);display:flex;align-items:center;gap:8px}
@@ -157,11 +159,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .loading-overlay .spinner{width:36px;height:36px;border-width:3px}
 .loading-overlay p{font-size:.8rem;color:var(--stone);letter-spacing:.1em}
 @media(max-width:900px){nav{padding:16px 20px}.forum-layout{grid-template-columns:1fr}.sidebar{display:none}.forum-main{padding:20px 16px}.modal-box{padding:28px 20px}}
+footer{background:var(--deep);padding:60px 48px 32px;margin-top:80px}
+footer p{font-size:.72rem;color:var(--muted);text-align:center;border-top:1px solid rgba(184,150,62,.1);padding-top:24px;margin-top:40px}
 </style>
 </head>
 <body style="visibility:hidden">
 <nav>
-  <a href="index.html" class="logo">Catechist's <span>Forum</span></a>
+  <a href="index.html" class="logo">
+    <img src="logo.png" class="logo-img" alt="Logo">
+    Catechist's <span>Forum</span>
+  </a>
   <div class="nav-right">
     <div class="nav-user" id="navUser" style="display:none">
       <div class="nav-avatar" id="navAvatar"></div>
@@ -419,7 +426,6 @@ async function showForum(){
   await renderThreads();
   updateNewBtn();
 }
-
 
 /* ── TOP CONTRIBUTORS ── */
 async function fetchTopContributors(){
@@ -875,5 +881,10 @@ document.getElementById('btnPostReply').addEventListener('click',async function(
 
 init();
 </script>
+
+<footer>
+  <p>© 2026 Catechist's Forum · <a href="index.html" style="color:var(--gold);text-decoration:none">Home</a> · <a href="articles.html" style="color:var(--gold);text-decoration:none">Articles</a> · <a href="timeline.html" style="color:var(--gold);text-decoration:none">Timeline</a> · <a href="index.html#contact" style="color:var(--gold);text-decoration:none">Contact</a></p>
+</footer>
+
 </body>
 </html>
