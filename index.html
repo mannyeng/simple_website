@@ -286,24 +286,27 @@
   .hero-image-frame {
     position: relative;
     height: 500px;
-    background: linear-gradient(135deg, #2d2018, #1a1410);
     border: 1px solid rgba(184,150,62,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
   }
-
-  .hero-image-frame::before {
+  .hero-image-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+  .hero-image-frame::after {
     content: '';
     position: absolute;
-    inset: 20px;
-    border: 1px solid rgba(184,150,62,0.12);
+    inset: 0;
+    background: linear-gradient(to bottom,rgba(26,20,16,.08) 0%,rgba(26,20,16,0) 40%,rgba(26,20,16,.22) 100%);
+    pointer-events: none;
   }
-
-  .cross-icon {
+  .cross-icon { display: none; }
+  .cross-icon-hidden {
     width: 120px; height: 120px;
-    opacity: 0.15;
+    opacity: 0;
     position: relative;
   }
   .cross-icon::before, .cross-icon::after {
@@ -396,23 +399,22 @@
   }
 
   .about-img-frame {
-    width: 100%;
-    aspect-ratio: 3/4;
-    background: linear-gradient(160deg, var(--bark), var(--deep));
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    background: transparent;
     position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none;
+    line-height: 0;
   }
-
-  .about-img-frame::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 40%;
-    background: linear-gradient(to top, rgba(184,150,62,0.3), transparent);
+  .about-img-frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+    position: relative;
+    z-index: 1;
   }
+  .about-img-frame::after { display: none; }
 
   .arch-decoration {
     position: absolute;
@@ -429,6 +431,7 @@
     width: 80px; height: 80px;
     border: 2px solid var(--gold);
     opacity: 0.4;
+    z-index: 10;
   }
 
   .about-number {
@@ -438,6 +441,7 @@
     padding: 20px 28px;
     color: var(--cream);
     font-family: 'Cormorant Garamond', serif;
+    z-index: 10;
   }
   .about-number .num {
     font-size: 2.5rem;
@@ -889,8 +893,8 @@
   <div class="hero-content">
     <div class="hero-text">
       <div class="hero-eyebrow">Welcome to Our Community</div>
-      <h1>A Place to<br><em>Belong,</em><br>Believe &amp; Grow</h1>
-      <p class="hero-desc">Join thousands of faithful members in worship, fellowship, and service. Together we build a community rooted in love, faith, and purposeful action.</p>
+      <h1>Empowering <br><em>Catechists:</em><br>Formed in Faith, Fired for Mission</h1>
+      <p class="hero-desc">A forum for quality formation, doctrinal resources, and community to advance the Church's ministry of the Word.</p>
       <div class="hero-ctas">
         <a href="#about" class="btn-primary">Discover Our Story</a>
         <a href="#forum" class="btn-ghost">Join the Forum</a>
@@ -898,7 +902,7 @@
     </div>
     <div class="hero-image-side">
       <div class="hero-image-frame">
-        <div class="cross-icon"></div>
+        <img src="Firefly.png" alt="Catechist teaching students in a faith-Formation classroom">
       </div>
       <div class="floating-quote">
         <p>"Love one another as I have loved you."</p>
@@ -918,11 +922,7 @@
     <div class="about-visual">
       <div class="about-accent-box"></div>
       <div class="about-img-frame">
-        <div class="arch-decoration"></div>
-        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" opacity="0.2">
-          <circle cx="30" cy="30" r="28" stroke="#b8963e" stroke-width="1"/>
-          <path d="M30 8 L30 52 M8 30 L52 30" stroke="#b8963e" stroke-width="1.5"/>
-        </svg>
+        <img src="saint.png" alt="Saint holding scripture and staff">
       </div>
       <div class="about-number">
         <span class="num">2,200+</span>
@@ -1099,7 +1099,7 @@
         <ul>
           <li><a href="#">Didache-Theology Program</a></li>
           <li><a href="#">Conferences</a></li>
-          <li><a href="#">Outreach</a></li>
+          <li><a href="#">Training Programs</a></li>
         </ul>
       </div>
       <div class="footer-col">

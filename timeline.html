@@ -84,50 +84,42 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
    Card is absolutely placed at its level above/below spine.
    All three are independent — no flex stacking. ── */
 
-/* Wrapper: anchor at spine x position */
-.tl-item{position:absolute;top:50%;cursor:pointer;z-index:5}
+/* Wrapper: anchor at spine x position.
+   z-index:2 so cards sit above connectors (z-index:1 layer on track). */
+.tl-item{position:absolute;top:50%;cursor:pointer;z-index:2}
 
-/* dot: centred on left:10px axis (same axis as connector & card left edge) */
+/* dot */
 .tl-dot{position:absolute;left:10px;top:0;transform:translate(-50%,-50%);
   width:10px;height:10px;border-radius:50%;background:var(--gold);
   border:2px solid var(--deep);box-shadow:0 0 0 3px rgba(184,150,62,.18);
-  z-index:4;transition:transform .2s,box-shadow .2s}
+  z-index:3;transition:transform .2s,box-shadow .2s}
 .tl-item:hover .tl-dot{transform:translate(-50%,-50%) scale(1.4);
   box-shadow:0 0 0 6px rgba(184,150,62,.2),0 0 14px rgba(184,150,62,.35)}
 
-/* connector: same left:10px axis as dot and card left border.
-   Height = cardDist so it spans exactly from dot to card border.
-   z-index:1 — behind card so it doesn't overlap text at all. */
-.connector{position:absolute;left:10px;transform:translateX(-50%);
-  width:1px;z-index:1;transition:background .2s}
-.tl-item.above .connector{
-  bottom:0;
-  background:linear-gradient(to bottom,rgba(184,150,62,.08),rgba(184,150,62,.45))}
-.tl-item.below .connector{
-  top:0;
-  background:linear-gradient(to top,rgba(184,150,62,.08),rgba(184,150,62,.45))}
-/* arrowhead at spine end */
-.tl-item.above .connector::after{content:"";position:absolute;bottom:-3px;left:50%;
+/* connector: placed DIRECTLY on the track (not inside tl-item) at z-index:1
+   so it is always below ALL cards from ALL items. See JS for placement. */
+.tl-connector{position:absolute;width:1px;z-index:1;pointer-events:none}
+.tl-connector.above{background:linear-gradient(to bottom,rgba(184,150,62,.08),rgba(184,150,62,.45))}
+.tl-connector.below{background:linear-gradient(to top,rgba(184,150,62,.08),rgba(184,150,62,.45))}
+.tl-connector.above::after{content:"";position:absolute;bottom:-3px;left:50%;
   transform:translateX(-50%);border-left:3px solid transparent;
   border-right:3px solid transparent;border-top:4px solid rgba(184,150,62,.45)}
-.tl-item.below .connector::after{content:"";position:absolute;top:-3px;left:50%;
+.tl-connector.below::after{content:"";position:absolute;top:-3px;left:50%;
   transform:translateX(-50%);border-left:3px solid transparent;
   border-right:3px solid transparent;border-bottom:4px solid rgba(184,150,62,.45)}
-.tl-item:hover .connector{
-  background:linear-gradient(to bottom,rgba(184,150,62,.3),rgba(184,150,62,.8)) !important}
 
-/* card: left:10px so its left border sits exactly where connector ends.
-   padding-left:8px so text clears the left border cleanly. */
+/* card: solid opaque background so it always visually covers connectors beneath.
+   On hover: fully opaque so title text is always readable. */
 .ev-card{position:absolute;left:10px;
   width:150px;height:32px;
-  background:rgba(28,20,14,.95);border:1px solid rgba(184,150,62,.22);
+  background:rgba(28,20,14,.97);border:1px solid rgba(184,150,62,.22);
   padding:0 8px;z-index:2;
   display:flex;align-items:center;
   transition:background .2s,border-color .2s;
-  backdrop-filter:blur(4px);overflow:hidden}
+  backdrop-filter:blur(6px);overflow:hidden}
 .ev-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--gold),var(--gold-light));opacity:0;transition:opacity .2s}
-.tl-item:hover .ev-card{background:rgba(184,150,62,.12);border-color:rgba(184,150,62,.55)}
+.tl-item:hover .ev-card{background:rgba(22,14,8,1);border-color:rgba(184,150,62,.7)}
 .tl-item:hover .ev-card::before{opacity:1}
 
 /* year label — centred on same left:10px axis as dot */
@@ -148,14 +140,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
   --range-dim:rgba(74,158,173,.18);
   --range-mid:rgba(74,158,173,.28);
 }
-.range-item{position:absolute;top:50%;transform:translateY(-50%);cursor:pointer;z-index:4}
-/* filled band */
-.range-band{position:absolute;top:50%;left:0;right:0;height:34px;transform:translateY(-50%);
-  background:linear-gradient(90deg,rgba(74,158,173,.06),rgba(74,158,173,.14),rgba(74,158,173,.06));
-  border:1px solid rgba(74,158,173,.3);border-radius:4px;transition:all .22s;z-index:1}
-.range-item:hover .range-band{
-  background:linear-gradient(90deg,rgba(74,158,173,.14),rgba(74,158,173,.24),rgba(74,158,173,.14));
-  border-color:rgba(74,158,173,.65);height:38px}
+.range-item{position:absolute;top:50%;transform:translateY(-50%);z-index:4;pointer-events:none}
 /* centre spine bar */
 .range-bar{position:absolute;top:50%;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--range),var(--range-light),var(--range));
@@ -179,12 +164,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:cen
 .range-connector{width:1px;height:14px}
 .range-card-wrap.above .range-connector{background:linear-gradient(to top,rgba(74,158,173,.12),rgba(74,158,173,.5))}
 .range-card-wrap.below .range-connector{background:linear-gradient(to bottom,rgba(74,158,173,.12),rgba(74,158,173,.5))}
-/* range band — no title inside, just the coloured box */
+/* range band — clickable, pointer-events:auto overrides parent none */
 .range-band{position:absolute;top:50%;left:0;right:0;height:42px;
   transform:translateY(-50%);
   background:linear-gradient(90deg,rgba(74,158,173,.07),rgba(74,158,173,.14),rgba(74,158,173,.07));
   border:1px solid rgba(74,158,173,.28);border-radius:4px;
-  transition:all .22s;z-index:1;overflow:visible}
+  transition:all .22s;z-index:1;overflow:visible;
+  pointer-events:auto;cursor:pointer}
 .range-item:hover .range-band{
   background:linear-gradient(90deg,rgba(74,158,173,.14),rgba(74,158,173,.24),rgba(74,158,173,.14));
   border-color:rgba(74,158,173,.6);height:46px}
@@ -712,10 +698,10 @@ function render(){
       var xMid  =xStart+spanPx/2;
       var item=document.createElement('div');
       item.className='range-item';
-      item.style.cssText='left:'+xStart+'px;width:'+spanPx+'px;height:100%';
-      item.addEventListener('click',function(){openDetail(ev);});
-      // band contains title directly
+      item.style.cssText='left:'+xStart+'px;width:'+spanPx+'px;height:0';
+      // band contains title directly — click only on band, not whole column
       var band=document.createElement('div');band.className='range-band';
+      band.addEventListener('click',function(){openDetail(ev);});
       var bandTitle=document.createElement('div');bandTitle.className='range-band-title';
       bandTitle.textContent=ev.title;
       band.appendChild(bandTitle);
@@ -732,18 +718,16 @@ function render(){
       var side     = isAbove ? 'above' : 'below';
       var lvl      = getLevel2(side, xStart);
       var cardDist = BASE_GAP2 + lvl * LVL_STEP2;
-      var connH    = cardDist;
 
+      // ── tl-item: holds dot + card only (no connector) ────────
       var item = document.createElement('div');
       item.className = 'tl-item ' + (isAbove ? 'above' : 'below');
       item.style.left = xStart + 'px';
       item.addEventListener('click', function(){ openDetail(ev); });
 
-      var dot  = document.createElement('div'); dot.className = 'tl-dot';
-      var conn = document.createElement('div'); conn.className = 'connector';
-      conn.style.height = connH + 'px';
+      var dot = document.createElement('div'); dot.className = 'tl-dot';
 
-      // year label — skip if this year already labelled
+      // year label
       var yr = null;
       if(shownYears.indexOf(ev.year) < 0){
         shownYears.push(ev.year);
@@ -754,22 +738,39 @@ function render(){
       if(isAbove){
         card.style.bottom = cardDist + 'px';
         card.style.top    = 'auto';
-        conn.style.bottom = '0';
-        conn.style.top    = 'auto';
         if(yr){ yr.style.top = '8px'; yr.style.bottom = 'auto'; }
       } else {
         card.style.top    = cardDist + 'px';
         card.style.bottom = 'auto';
-        conn.style.top    = '0';
-        conn.style.bottom = 'auto';
         if(yr){ yr.style.bottom = '8px'; yr.style.top = 'auto'; }
       }
 
       item.appendChild(dot);
-      item.appendChild(conn);
       item.appendChild(card);
       if(yr) item.appendChild(yr);
       track.appendChild(item);
+
+      // ── connector: appended directly to track at z-index:1 ───
+      // Sits below ALL cards from ALL items in the flat track stacking context.
+      var conn = document.createElement('div');
+      conn.className = 'tl-connector ' + (isAbove ? 'above' : 'below');
+      conn.style.left   = (xStart + 10) + 'px';    // same axis as dot
+      conn.style.width  = '1px';
+      conn.style.height = cardDist + 'px';
+      if(isAbove){
+        // spine is at top:50%; connector goes upward from spine
+        conn.style.top    = 'calc(50% - ' + cardDist + 'px)';
+        conn.style.bottom = 'auto';
+      } else {
+        // connector goes downward from spine
+        conn.style.top    = '50%';
+        conn.style.bottom = 'auto';
+      }
+      // store ref so hover on item can highlight connector
+      item._conn = conn;
+      item.addEventListener('mouseenter', function(){ if(this._conn) this._conn.style.background = isAbove ? 'linear-gradient(to bottom,rgba(184,150,62,.3),rgba(184,150,62,.8))' : 'linear-gradient(to top,rgba(184,150,62,.3),rgba(184,150,62,.8))'; });
+      item.addEventListener('mouseleave', function(){ if(this._conn) this._conn.style.background = ''; });
+      track.appendChild(conn);
     }
   });
 
