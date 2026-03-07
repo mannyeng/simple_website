@@ -74,7 +74,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:fl
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── ARTICLE DETAIL ── */
-#articleDetail{display:none;max-width:800px;margin:0 auto;padding:80px 48px}
+#articleDetail{max-width:800px;margin:0 auto;padding:80px 48px}
 .detail-back{display:inline-flex;align-items:center;gap:8px;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);text-decoration:none;cursor:pointer;margin-bottom:48px;transition:color .2s;background:none;border:none;font-family:'Jost',sans-serif}
 .detail-back:hover{color:var(--gold)}
 .detail-back svg{width:14px;height:14px}
@@ -84,7 +84,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:fl
 .detail-author{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone)}
 .detail-author span{color:var(--gold)}
 h1.detail-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:300;color:var(--bark);line-height:1.2;margin-bottom:32px}
-.detail-body{font-size:.95rem;color:var(--bark);line-height:1.9;white-space:pre-wrap}
+.detail-body{font-size:.95rem;color:var(--bark);line-height:1.9}
 .detail-body p{margin-bottom:1.4em}
 
 /* LIKE BUTTON */
@@ -329,7 +329,7 @@ async function openArticle(a){
   document.getElementById('detailTitle').textContent = a.title;
   document.getElementById('detailDate').textContent = fmtDate(a.created_at);
   document.getElementById('detailAuthor').textContent = a.author_name;
-  document.getElementById('detailBody').textContent = a.body;
+  document.getElementById('detailBody').innerHTML = esc(a.body||'').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>').replace(/^(.)/,'<p>$1').replace(/(.)$/,'$1</p>');
 
   var img = document.getElementById('detailImg');
   if(a.image_url){ img.src=a.image_url; img.style.display='block'; } else { img.style.display='none'; }
